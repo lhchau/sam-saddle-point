@@ -33,7 +33,7 @@ class SAM_Faster(Optimizer):
             )
 
             # torch signature is ((device_params, device_grads), _).
-            for ((device_params, device_grads), _) in grouped_tensors.values():
+            for device_params, device_grads in grouped_tensors.values():
                 device_scale = scale.clone().to(device_params[0])
                 if group["adaptive"]:
                     e_w = torch._foreach_mul(device_params, device_params)
