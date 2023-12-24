@@ -1,5 +1,6 @@
 import torch
 from torch.optim.optimizer import Optimizer
+from torch.utils._foreach_utils import _group_tensors_by_device_and_dtype
 
 class SAM_Faster(Optimizer):
     def __init__(self, params, base_optimizer, rho=0.05, adaptive=False, **kwargs):
@@ -27,7 +28,7 @@ class SAM_Faster(Optimizer):
                     grads.append(p.grad)
                     self.state[p]["p_old"] = p.data.clone()
             
-            grouped_tensors = Optimizer._group_tensors_by_device_and_dtype(
+            grouped_tensors = _group_tensors_by_device_and_dtype(
                 [params_with_grad, grads]
             )
 
