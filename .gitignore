@@ -1,0 +1,7 @@
+__pycache__
+data/cifar-10*
+src.egg-info
+wandb
+checkpoint/cifar*
+tiny-imagenet-200
+checkpoint/Does*
