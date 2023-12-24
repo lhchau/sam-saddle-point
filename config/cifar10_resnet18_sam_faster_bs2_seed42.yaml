@@ -20,5 +20,5 @@ model:
   nesterov: False
 
 wandb:
-  name: "resnet18_bs2_seed42"
+  name: "sam_faster_resnet18_bs2_seed42"
   project: "SAM-Saddle-Point-CIFAR10"

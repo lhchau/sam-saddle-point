@@ -1,6 +1,6 @@
 data:
-  name: "cifar100"
-  batch_size: 2
+  name: "cifar10"
+  batch_size: 8
   num_workers: 4
   split: [0.9, 0.1]
 
@@ -20,5 +20,5 @@ model:
   nesterov: False
 
 wandb:
-  name: "resnet18_bs2_seed42"
-  project: "SAM-Saddle-Point-CIFAR100"
+  name: "resnet18_bs8_seed42"
+  project: "SAM-Saddle-Point-CIFAR10"
