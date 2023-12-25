@@ -14,7 +14,7 @@ model:
   name: "sgd"
   lr: 0.1
   momentum: 0.9
-  weight_decay: 0.001
+  weight_decay: 0.0005
 
 wandb:
   name: "sgd_resnet18_bs128_seed42"
