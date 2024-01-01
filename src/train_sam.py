@@ -97,8 +97,7 @@ def train(epoch):
         optimizer.first_step(zero_grad=True)
 
         disable_running_stats(net)  # <- this is the important line
-        second_loss = criterion(net(inputs), targets)
-        second_loss.backward()
+        criterion(net(inputs), targets).backward()
         optimizer.second_step(zero_grad=True)
         
         train_loss += first_loss.item()
