@@ -44,7 +44,7 @@ class DNSAM(torch.optim.Optimizer):
         
         grad_norm = self._grad_norm_dnsam() 
         for group in self.param_groups:
-            scale = group["rho"] / (grad_norm + 1e-18)
+            scale = group["rho"] / (grad_norm + 1e-12)
 
             for i, p in enumerate(group["params"]):
                 if p.grad is None: continue
