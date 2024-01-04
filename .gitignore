@@ -5,3 +5,4 @@ wandb
 checkpoint/cifar*
 tiny-imagenet-200
 checkpoint/Does*
+dnsam.egg-info

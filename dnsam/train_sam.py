@@ -11,10 +11,10 @@ import argparse
 import wandb
 import yaml
 
-from src.models import *
-from src.utils import *
-from src.data import *
-from src.scheduler import *
+from dnsam.models import *
+from dnsam.utils import *
+from dnsam.data import *
+from dnsam.scheduler import *
 
 current_time = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
 
