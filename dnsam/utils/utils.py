@@ -14,6 +14,21 @@ import random
 import torch
 import numpy as np
 
+def cosine_similarity(grad1, grad2):
+    dot_product = torch.sum(grad1 * grad2)
+    norm_grad1 = torch.norm(grad1)
+    norm_grad2 = torch.norm(grad2)
+    similarity = dot_product / (norm_grad1 * norm_grad2 + 1e-18)
+    return similarity.item()
+
+def get_gradients(optimizer):
+    grads = []
+    for group in optimizer.param_groups:
+        for p in group["params"]:
+            if p.grad is None: continue
+            grads.append(p.grad.clone())
+    return grads
+
 def initialize(seed: int):
     random.seed(seed)
     torch.manual_seed(seed)

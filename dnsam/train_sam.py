@@ -94,11 +94,26 @@ def train(epoch):
         outputs = net(inputs)
         first_loss = criterion(outputs, targets)
         first_loss.backward()
-        optimizer.first_step(zero_grad=True)
+        optimizer.first_step(zero_grad=False)
+        
+        # get ascent grads
+        first_grads = get_gradients(optimizer)
+        optimizer.zero_grad()
 
         disable_running_stats(net)  # <- this is the important line
         criterion(net(inputs), targets).backward()
-        optimizer.second_step(zero_grad=True)
+        optimizer.second_step(zero_grad=False)
+        
+        # get descent grads
+        second_grads = get_gradients(optimizer)
+        optimizer.zero_grad()
+        
+        # get cosine similarity
+        similarity = np.mean([cosine_similarity(grad1, grad2) for grad1, grad2 in zip(first_grads, second_grads)])
+        wandb.log({
+            'similarity': similarity
+        })
+
         
         train_loss += first_loss.item()
         _, predicted = outputs.max(1)
