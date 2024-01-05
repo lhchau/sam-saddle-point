@@ -42,7 +42,10 @@ class DNSAM(torch.optim.Optimizer):
                 state = self.state[p]
                 state['dnsam_buffer'] = dnsam_buffer
         
+        sam_grad_norm = self._grad_norm()
         grad_norm = self._grad_norm_dnsam() 
+        self.step_length = sam_grad_norm / grad_norm
+        
         for group in self.param_groups:
             scale = group["rho"] / (grad_norm + 1e-12)
 
@@ -85,6 +88,21 @@ class DNSAM(torch.optim.Optimizer):
                     p=2
                )
         return norm
+
+    def _grad_norm(self):
+        shared_device = self.param_groups[0]["params"][0].device  # put everything on the same device, in case of model parallelism
+        norm = torch.norm(
+                    torch.stack([
+                        ((torch.abs(p) if group["adaptive"] else 1.0) * p.grad).norm(p=2).to(shared_device)
+                        for group in self.param_groups for p in group["params"]
+                        if p.grad is not None
+                    ]),
+                    p=2
+               )
+        return norm
+    
+    def _get_step_length(self):
+        return self.step_length
 
     def load_state_dict(self, state_dict):
         super().load_state_dict(state_dict)
