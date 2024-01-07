@@ -1,23 +1,32 @@
 import torch
 
 
-class SAM(torch.optim.Optimizer):
-    def __init__(self, params, base_optimizer, rho=0.05, adaptive=False, **kwargs):
+class DSAM(torch.optim.Optimizer):
+    def __init__(self, params, base_optimizer, dsam_theta=0.9, rho=0.05, adaptive=False, **kwargs):
         assert rho >= 0.0, f"Invalid rho, should be non-negative: {rho}"
 
         defaults = dict(rho=rho, adaptive=adaptive, **kwargs)
-        super(SAM, self).__init__(params, defaults)
+        super(DSAM, self).__init__(params, defaults)
 
         self.base_optimizer = base_optimizer(self.param_groups, **kwargs)
         self.param_groups = self.base_optimizer.param_groups
         self.defaults.update(self.base_optimizer.defaults)
+        self.dsam_theta = dsam_theta
+        self.ema_norm = 0
 
     @torch.no_grad()
     def first_step(self, zero_grad=False):
-        grad_norm = self._grad_norm()
+        if self.ema_norm == 0:
+            self.ema_norm = self._grad_norm()
+        else:
+            grad_norm = self._grad_norm()
+            self.ema_norm = (1 - self.dsam_theta) * self.ema_norm + self.dsam_theta * grad_norm
+        self.acc_norm = self.ema_norm
         self.curr_norm = grad_norm
+        self.step_length = self.curr_norm / self.acc_norm
+
         for group in self.param_groups:
-            scale = group["rho"] / (grad_norm + 1e-12)
+            scale = group["rho"] / (self.ema_norm + 1e-12)
 
             for p in group["params"]:
                 if p.grad is None: continue
@@ -34,7 +43,7 @@ class SAM(torch.optim.Optimizer):
             for p in group["params"]:
                 if p.grad is None: continue
                 p.data = self.state[p]["old_p"]  # get back to "w" from "w + e(w)"
-
+                
         self.base_optimizer.step()  # do the actual "sharpness-aware" update
 
         if zero_grad: self.zero_grad()
@@ -61,10 +70,10 @@ class SAM(torch.optim.Optimizer):
         return norm
     
     def _get_step_length(self):
-        return self.param_groups[0]['rho'] / 0.05
+        return self.step_length
     
     def _get_norm(self):
-        return (self.curr_norm, 0)
+        return (self.curr_norm, self.acc_norm)
     
     def load_state_dict(self, state_dict):
         super().load_state_dict(state_dict)

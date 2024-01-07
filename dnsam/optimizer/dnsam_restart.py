@@ -50,6 +50,8 @@ class RDNSAM(torch.optim.Optimizer):
 
         sam_grad_norm = self._grad_norm()
         grad_norm = self._grad_norm_dnsam()
+        self.acc_norm = grad_norm
+        self.curr_norm = sam_grad_norm 
         self.step_length = sam_grad_norm / grad_norm
 
         for group in self.param_groups:
@@ -122,6 +124,9 @@ class RDNSAM(torch.optim.Optimizer):
 
     def _get_step_length(self):
         return self.step_length
+    
+    def _get_norm(self):
+        return (self.curr_norm, self.acc_norm)
 
     def load_state_dict(self, state_dict):
         super().load_state_dict(state_dict)
