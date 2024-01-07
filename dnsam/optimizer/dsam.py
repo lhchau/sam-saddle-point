@@ -16,10 +16,10 @@ class DSAM(torch.optim.Optimizer):
 
     @torch.no_grad()
     def first_step(self, zero_grad=False):
+        grad_norm = self._grad_norm()
         if self.ema_norm == 0:
             self.ema_norm = self._grad_norm()
         else:
-            grad_norm = self._grad_norm()
             self.ema_norm = (1 - self.dsam_theta) * self.ema_norm + self.dsam_theta * grad_norm
         self.acc_norm = self.ema_norm
         self.curr_norm = grad_norm
