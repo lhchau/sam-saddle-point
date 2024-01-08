@@ -34,9 +34,9 @@ class DNSAM(torch.optim.Optimizer):
                     
                     if buf is None:
                         buf = torch.clone(d_p).detach()
-                        dnsam_buffer_list[i] = buf
                     else:
                         buf.mul_(1 - self.dnsam_theta).add_(d_p, alpha=self.dnsam_theta)
+                    dnsam_buffer_list[i] = buf
             # update momentum_buffers in state
             for p, dnsam_buffer in zip(group["params"], dnsam_buffer_list):
                 state = self.state[p]

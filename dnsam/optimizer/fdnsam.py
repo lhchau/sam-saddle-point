@@ -1,12 +1,12 @@
 import torch
 
 
-class RDNSAM(torch.optim.Optimizer):
-    def __init__(self, params, base_optimizer, dnsam_theta=0.9, rho=0.05, restart_step=352, adaptive=False, **kwargs):
+class FDNSAM(torch.optim.Optimizer):
+    def __init__(self, params, base_optimizer, dnsam_theta=0.5, rho=0.05, restart_step=352, adaptive=False, **kwargs):
         assert rho >= 0.0, f"Invalid rho, should be non-negative: {rho}"
 
         defaults = dict(rho=rho, adaptive=adaptive, **kwargs)
-        super(RDNSAM, self).__init__(params, defaults)
+        super(FDNSAM, self).__init__(params, defaults)
 
         self.base_optimizer = base_optimizer(self.param_groups, **kwargs)
         self.param_groups = self.base_optimizer.param_groups
@@ -14,6 +14,7 @@ class RDNSAM(torch.optim.Optimizer):
         self.dnsam_theta = dnsam_theta
         self.restart_step = restart_step
         self.curr_step = 0
+        self.first_epoch = True
 
     @torch.no_grad()
     def first_step(self, zero_grad=False):
@@ -37,9 +38,9 @@ class RDNSAM(torch.optim.Optimizer):
                     buf = self.state[p].get('dnsam_buffer', None)
 
                     if buf is None or self.curr_step == self.restart_step:
-                        buf = torch.clone(d_p).detach()
+                        buf = torch.clone(d_p.mul_(self.dnsam_theta)).detach()
                     else:
-                        buf.mul_(1 - self.dnsam_theta).add_(d_p, alpha=self.dnsam_theta)
+                        buf.add_(d_p, alpha=self.dnsam_theta)
                     dnsam_buffer_list[i] = buf
             # update momentum_buffers in state
             for p, dnsam_buffer in zip(group["params"], dnsam_buffer_list):
@@ -47,14 +48,13 @@ class RDNSAM(torch.optim.Optimizer):
                 state['dnsam_buffer'] = dnsam_buffer
                 
         if self.curr_step == self.restart_step:
+            self.acc_norm = self._grad_norm_dnsam()
+            self.first_epoch = False
             self.curr_step = 0
 
-        sam_grad_norm = self._grad_norm()
-        grad_norm = self._grad_norm_dnsam()
-        self.acc_norm = grad_norm
-        self.curr_norm = sam_grad_norm 
-        self.step_length = sam_grad_norm / grad_norm
-
+        self.curr_norm = self._grad_norm() 
+        self.step_length = self.curr_norm / self.acc_norm if not self.first_epoch else 1
+        grad_norm = self.curr_norm if self.first_epoch else self.acc_norm
         for group in self.param_groups:
             scale = group["rho"] / (grad_norm + 1e-12)
 
@@ -127,7 +127,7 @@ class RDNSAM(torch.optim.Optimizer):
         return self.step_length
     
     def _get_norm(self):
-        return (self.curr_norm, self.acc_norm)
+        return (self.curr_norm, self.acc_norm) if not self.first_epoch else (self.curr_norm, 1)
 
     def load_state_dict(self, state_dict):
         super().load_state_dict(state_dict)

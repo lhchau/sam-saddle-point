@@ -1,0 +1,26 @@
+data:
+  name: "cifar100"
+  batch_size: 1024
+  num_workers: 4
+  split: [0.9, 0.1]
+
+trainer:
+  seed: 42
+  sch: "cosine_annealing_lr"
+  epochs: 200
+
+model:
+  architecture: "resnet34"
+  name: "dnsam"
+  lr: 0.1
+  momentum: 0.9
+  weight_decay: 0.001
+  rho: 0.1
+  adaptive: False
+  nesterov: False
+  dnsam_theta: 0.1
+
+wandb:
+  name: "resnet34_dnsam01_rho01_bs1024_seed42"
+  project: "SAM-Saddle-Point-CIFAR100"
+
