@@ -16,6 +16,7 @@ class HSAM(torch.optim.Optimizer):
 
     @torch.no_grad()
     def first_step(self, zero_grad=False):
+        self.curr_norm = self._grad_norm()
         for group in self.param_groups:            
             
             for i, p in enumerate(group["params"]):
@@ -71,7 +72,7 @@ class HSAM(torch.optim.Optimizer):
         return norm
     
     def _get_step_length(self):
-        return self.param_groups[0]['rho'] / 0.05
+        return 1
     
     def _get_norm(self):
         return (self.curr_norm, 0)
