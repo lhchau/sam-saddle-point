@@ -110,13 +110,8 @@ def train(epoch):
         
         # get cosine similarity
         similarity = np.mean([cosine_similarity(grad1, grad2) for grad1, grad2 in zip(first_grads, second_grads)])
-        step_length = optimizer._get_step_length()
-        curr_norm, acc_norm = optimizer._get_norm()
         wandb.log({
             'similarity': similarity,
-            'step_length': step_length,
-            'curr_norm': curr_norm,
-            'acc_norm': acc_norm
         })
 
         

@@ -6,21 +6,23 @@ data:
 
 trainer:
   seed: 42
-  sch: "cosine_annealing_lr"
+  sch: "constant_lr"
+  factor: 1
+  total_iters: 200
   epochs: 200
 
 model:
   architecture: "resnet18"
-  name: "hsam"
-  lr: 0.1
+  name: "dnsam"
+  lr: 0.0025
   momentum: 0.9
   weight_decay: 0.001
   rho: 0.05
-  hsam_beta: 0.95
   adaptive: False
   nesterov: False
+  dnsam_theta: 0.1
 
 wandb:
-  name: "resnet18_hsam_bs1024_seed42"
+  name: "resnet18_dnsam01_constant_bs1024_seed42"
   project: "SAM-Saddle-Point-CIFAR100"
 

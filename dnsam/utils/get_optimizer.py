@@ -1,4 +1,4 @@
-from ..optimizer import SAM, SAM_Faster, DNSAM, RDNSAM, DSAM, FDNSAM, HSAM
+from ..optimizer import SAM, SAM_Faster, DNSAM, RDNSAM, DSAM, FDNSAM, HSAM, PSAM
 
 def get_optimizer(net, base_optimizer, cfg):
     if cfg['model']['name'] == 'sam':
@@ -85,6 +85,17 @@ def get_optimizer(net, base_optimizer, cfg):
             nesterov=cfg['model']['nesterov'],
             hsam_beta=cfg['model']['hsam_beta'],
             bs=cfg['data']['batch_size']
+        )
+    elif cfg['model']['name'] == 'psam':
+        return PSAM(
+            net.parameters(), 
+            base_optimizer, 
+            lr=cfg['model']['lr'], 
+            momentum=cfg['model']['momentum'], 
+            weight_decay=cfg['model']['weight_decay'],
+            rho=cfg['model']['rho'], 
+            adaptive=cfg['model']['adaptive'],
+            nesterov=cfg['model']['nesterov'],
         )
     else:
         raise ValueError("Invalid optimizer!!!")
