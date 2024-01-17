@@ -14,6 +14,24 @@ import random
 import torch
 import numpy as np
 
+import math
+
+class RhoScheduler:
+    def __init__(self, optimizer, rho: float, warmup_epochs: int, total_epochs: int, last_epoch=-1):
+        self.optimizer = optimizer
+        self.warmup_epochs = warmup_epochs
+        self.total_epochs = total_epochs
+        self.rho = rho
+        self.epoch = 0
+
+    def step(self, epoch):
+        if epoch < self.warmup_epochs:
+            rho = self.rho * (epoch + 1) / self.warmup_epochs
+        else: rho = self.rho
+            
+        for group in self.optimizer.param_groups:
+            group["rho"] = rho
+        
 def cosine_similarity(grad1, grad2):
     dot_product = torch.sum(grad1 * grad2)
     norm_grad1 = torch.norm(grad1)

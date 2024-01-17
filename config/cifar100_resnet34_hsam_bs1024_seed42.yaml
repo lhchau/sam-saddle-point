@@ -1,5 +1,5 @@
 data:
-  name: "cifar100"
+  name: "cifar10"
   batch_size: 1024
   num_workers: 4
   split: [0.9, 0.1]
@@ -10,17 +10,17 @@ trainer:
   epochs: 200
 
 model:
-  architecture: "resnet18"
-  name: "dnsam"
+  architecture: "resnet34"
+  name: "hsam"
   lr: 0.1
   momentum: 0.9
   weight_decay: 0.001
-  rho: 0.1
+  rho: 0.05
+  hsam_beta: 0.95
   adaptive: False
   nesterov: False
-  dnsam_theta: 0.1
 
 wandb:
-  name: "resnet18_dnsam01_rho01_bs1024_seed42"
-  project: "SAM-Saddle-Point-CIFAR100"
+  name: "resnet34_hsam_bs1024_seed42"
+  project: "SAM-Saddle-Point-CIFAR10"
 

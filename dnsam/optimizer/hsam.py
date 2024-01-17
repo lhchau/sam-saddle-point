@@ -12,7 +12,7 @@ class HSAM(torch.optim.Optimizer):
         self.param_groups = self.base_optimizer.param_groups
         self.defaults.update(self.base_optimizer.defaults)
         self.hsam_beta = hsam_beta
-        self.ema_beta = 0.9
+        self.ema_beta = 0.95
         self.bs = bs
         self.hessian_rho = 0.03
 
