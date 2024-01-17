@@ -79,7 +79,7 @@ print(f"==> Loading scheduler: {sch}")
 base_optimizer = optim.SGD
 optimizer = get_optimizer(net, base_optimizer, cfg)
 scheduler = get_scheduler(optimizer, cfg)
-rho_scheduler = RhoScheduler(optimizer, cfg['model']['rho'], warmup_epochs=5, total_epochs=EPOCHS)
+rho_scheduler = RhoScheduler(optimizer, cfg['model']['rho'], warmup_epochs=cfg['trainer']['warmup'], total_epochs=EPOCHS)
 # Training
 def train(epoch):
     print('\nEpoch: %d' % epoch)
