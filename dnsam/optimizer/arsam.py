@@ -33,17 +33,21 @@ class ARSAM(torch.optim.Optimizer):
                 #     exp_avg.mul_(self.ema_beta).add_(p.grad, alpha=1 - self.ema_beta)
                 # self.state[p]['exp_avg'] = exp_avg
                 
-        grad_norm = self._grad_norm()
+        # grad_norm = self._grad_norm()
         for group in self.param_groups:
-            scale = group["rho"] / (grad_norm + 1e-15)
-
-            for p in group["params"]:
+            scale = group["rho"]
+            
+            for i, p in enumerate(group["params"]):
                 if p.grad is None: continue
                 self.state[p]["old_p"] = p.data.clone()
                 
-                e_w = (torch.pow(p, 2) if group["adaptive"] else 1.0) * p.grad * scale.to(p) / (self.bs * self.state[p]['hessian'] + 1e-15)
+                e_w = (torch.pow(p, 2) if group["adaptive"] else 1.0) * p.grad * scale.to(p) * (self.bs * self.state[p]['hessian'] + 1e-15)
                 
                 p.add_(e_w)  # climb to the local maximum "w + e(w)"
+                
+                print(self.bs * self.state[p]['hessian'])
+                if i == 0:
+                    break
 
         if zero_grad: self.zero_grad()
 
