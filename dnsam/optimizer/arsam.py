@@ -41,7 +41,7 @@ class ARSAM(torch.optim.Optimizer):
                 if p.grad is None: continue
                 self.state[p]["old_p"] = p.data.clone()
                 
-                e_w = (torch.pow(p, 2) if group["adaptive"] else 1.0) * p.grad * scale.to(p) * (self.bs * self.state[p]['hessian'] + 1e-15)
+                e_w = (torch.pow(p, 2) if group["adaptive"] else 1.0) * p.grad * scale * (self.bs * self.state[p]['hessian'] + 1e-15)
                 
                 p.add_(e_w)  # climb to the local maximum "w + e(w)"
                 
