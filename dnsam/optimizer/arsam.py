@@ -45,10 +45,6 @@ class ARSAM(torch.optim.Optimizer):
                 
                 p.add_(e_w)  # climb to the local maximum "w + e(w)"
                 
-                print(self.bs * self.state[p]['hessian'])
-                if i == 0:
-                    break
-
         if zero_grad: self.zero_grad()
 
     @torch.no_grad()
