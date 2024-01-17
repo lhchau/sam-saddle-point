@@ -38,15 +38,14 @@ class HSAM(torch.optim.Optimizer):
                 
                 self.state[p]['ascent_grad'] = ascent_grad
         
-        grad_norm = self._grad_norm()
         for group in self.param_groups:
-            scale = group["rho"] / (grad_norm + 1e-12)
+            scale = group["rho"]
 
             for p in group["params"]:
                 if p.grad is None: continue
                 self.state[p]["old_p"] = p.data.clone()
                 
-                e_w = self.state[p]['ascent_grad'] * scale.to(p)
+                e_w = self.state[p]['ascent_grad'] * scale
                 
                 p.add_(e_w)  # climb to the local maximum "w + e(w)"
 
