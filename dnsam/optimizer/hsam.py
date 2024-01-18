@@ -33,7 +33,7 @@ class HSAM(torch.optim.Optimizer):
                     exp_avg.mul_(self.ema_beta).add_(p.grad, alpha=1 - self.ema_beta)
                 self.state[p]['exp_avg'] = exp_avg
                 
-                ascent_grad = (exp_avg.abs() / (self.hessian_rho * self.bs * self.state[p]['hessian'] + 1e-15)).clamp(None, 1)
+                ascent_grad = (exp_avg.abs() / (self.hessian_rho * self.bs * self.state[p]['hessian'] + 1e-15)).clamp(None, 0.005)
                 ascent_grad.mul_(exp_avg.sign())
                 
                 self.state[p]['ascent_grad'] = ascent_grad
