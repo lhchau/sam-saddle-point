@@ -79,7 +79,10 @@ print(f"==> Loading scheduler: {sch}")
 base_optimizer = optim.SGD
 optimizer = get_optimizer(net, base_optimizer, cfg)
 scheduler = get_scheduler(optimizer, cfg)
-rho_scheduler = RhoScheduler(optimizer, cfg['model']['rho'], warmup_epochs=cfg['trainer']['warmup'], total_epochs=EPOCHS)
+
+warmup_flag = cfg['trainer'].get('warmup', None)
+if warmup_flag is not None:
+    rho_scheduler = RhoScheduler(optimizer, cfg['model']['rho'], warmup_epochs=cfg['trainer']['warmup'], total_epochs=EPOCHS)
 # Training
 def train(epoch):
     print('\nEpoch: %d' % epoch)
@@ -216,7 +219,8 @@ if __name__ == "__main__":
         val(epoch)
         wandb.log(metrics)
         scheduler.step()
-        rho_scheduler.step(epoch)
+        if warmup_flag is not None:
+            rho_scheduler.step(epoch)
     test()
     
         

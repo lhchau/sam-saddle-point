@@ -7,3 +7,4 @@ from .fdnsam import FDNSAM
 from .hsam import HSAM
 from .psam import PSAM
 from .arsam import ARSAM
+from .bsam import BSAM
