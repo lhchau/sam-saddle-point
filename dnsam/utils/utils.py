@@ -17,17 +17,18 @@ import numpy as np
 import math
 
 class RhoScheduler:
-    def __init__(self, optimizer, rho: float, warmup_epochs: int, total_epochs: int, last_epoch=-1):
+    def __init__(self, optimizer, rho: float, warmup_epochs: int, total_epochs: int, min_rho: float = 0.05, last_epoch=-1):
         self.optimizer = optimizer
         self.warmup_epochs = warmup_epochs
         self.total_epochs = total_epochs
-        self.rho = rho
+        self.max_rho = rho
+        self.min_rho = min_rho
         self.epoch = 0
 
     def step(self, epoch):
         if epoch < self.warmup_epochs:
-            rho = self.rho * (epoch + 1) / self.warmup_epochs
-        else: rho = self.rho
+            rho = self.min_rho + (self.max_rho - self.min_rho) * (epoch + 1) / self.warmup_epochs
+        else: rho = self.max_rho
             
         for group in self.optimizer.param_groups:
             group["rho"] = rho
