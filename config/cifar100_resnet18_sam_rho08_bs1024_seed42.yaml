@@ -1,6 +1,6 @@
 data:
   name: "cifar100"
-  batch_size: 128
+  batch_size: 1024
   num_workers: 4
   split: [0.9, 0.1]
 
@@ -15,11 +15,11 @@ model:
   lr: 0.1
   momentum: 0.9
   weight_decay: 0.001
-  rho: 0.05
+  rho: 0.8
   adaptive: False
   nesterov: False
 
 wandb:
-  name: "resnet18_rho005_bs128_seed42"
+  name: "resnet18_rho08_bs1024_seed42"
   project: "High-Rho-SAM-CIFAR100"
 

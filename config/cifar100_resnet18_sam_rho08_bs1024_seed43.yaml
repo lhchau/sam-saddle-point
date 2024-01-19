@@ -1,0 +1,23 @@
+data:
+  batch_size: 1024
+  name: cifar100
+  num_workers: 4
+  split:
+  - 0.9
+  - 0.1
+model:
+  adaptive: false
+  architecture: resnet18
+  lr: 0.1
+  momentum: 0.9
+  name: sam
+  nesterov: false
+  rho: 0.8
+  weight_decay: 0.001
+trainer:
+  epochs: 200
+  sch: cosine_annealing_lr
+  seed: 43
+wandb:
+  name: resnet18_rho08_bs1024_seed42
+  project: High-Rho-SAM-CIFAR100
