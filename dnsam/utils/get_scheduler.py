@@ -13,6 +13,12 @@ def get_scheduler(optimizer, cfg):
         optimizer,
         T_max=cfg['trainer']['epochs']
     )
+    elif cfg['trainer']['sch'] == "linear_warmup_cosine_annealing_lr":
+        return LinearWarmupCosineAnnealingLR(
+        optimizer,
+        warmup_epochs=cfg['trainer']['warmup'],
+        max_epochs=cfg['trainer']['epochs']
+    )
     elif cfg['trainer']['sch'] == "constant_lr":
         return torch.optim.lr_scheduler.ConstantLR(
         optimizer,

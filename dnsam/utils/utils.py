@@ -17,7 +17,7 @@ import numpy as np
 import math
 
 class RhoScheduler:
-    def __init__(self, optimizer, rho: float, warmup_epochs: int, total_epochs: int, min_rho: float = 0.05, last_epoch=-1):
+    def __init__(self, optimizer, rho: float, warmup_epochs: int, total_epochs: int, min_rho: float = 0.2, last_epoch=-1):
         self.optimizer = optimizer
         self.warmup_epochs = warmup_epochs
         self.total_epochs = total_epochs
