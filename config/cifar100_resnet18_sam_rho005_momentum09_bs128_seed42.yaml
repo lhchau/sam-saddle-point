@@ -20,6 +20,6 @@ model:
   nesterov: False
 
 wandb:
-  name: "resnet18_rho005_momentum0_bs128_seed42"
+  name: "resnet18_rho005_momentum09_bs128_seed42"
   project: "SAM-Momentum-Cifar100"
 
