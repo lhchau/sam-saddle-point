@@ -33,19 +33,20 @@ class HSAM(torch.optim.Optimizer):
                     exp_avg.mul_(self.ema_beta).add_(p.grad, alpha=1 - self.ema_beta)
                 self.state[p]['exp_avg'] = exp_avg
                 
-                ascent_grad = (exp_avg.abs() / (self.hessian_rho * self.bs * self.state[p]['hessian'] + 1e-15)).clamp(None, 0.005)
+                ascent_grad = (exp_avg.abs() / (self.hessian_rho * self.bs * self.state[p]['hessian'] + 1e-15)).clamp(None, 1)
                 ascent_grad.mul_(exp_avg.sign())
                 
                 self.state[p]['ascent_grad'] = ascent_grad
         
+        grad_norm = self._grad_norm()
         for group in self.param_groups:
-            scale = group["rho"]
+            scale = group['rho'] / (grad_norm + 1e-12)
 
             for p in group["params"]:
                 if p.grad is None: continue
                 self.state[p]["old_p"] = p.data.clone()
                 
-                e_w = self.state[p]['ascent_grad'] * scale
+                e_w = self.state[p]['ascent_grad'] * scale.to(p)
                 
                 p.add_(e_w)  # climb to the local maximum "w + e(w)"
 
