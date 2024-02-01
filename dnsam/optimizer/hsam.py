@@ -47,7 +47,7 @@ class HSAM(torch.optim.Optimizer):
                 if p.grad is None: continue
                 self.state[p]["old_p"] = p.data.clone()
                 
-                e_w = self.state[p]['ascent_grad'] * scale.to(p)
+                e_w = self.state[p]['exp_avg'] * scale.to(p)
                 
                 p.add_(e_w)  # climb to the local maximum "w + e(w)"
 
