@@ -41,7 +41,7 @@ class HSAM(torch.optim.Optimizer):
         grad_norm = self._grad_norm()
         hessian_norm = self._hessian_norm()
         for group in self.param_groups:
-            scale = group['rho'] / (grad_norm * hessian_norm * self.bs * self.hessian_rho + 1e-12)
+            scale = (group['rho'] / (grad_norm * hessian_norm * self.bs * self.hessian_rho + 1e-12)).clamp(None, 1)
 
             for p in group["params"]:
                 if p.grad is None: continue
