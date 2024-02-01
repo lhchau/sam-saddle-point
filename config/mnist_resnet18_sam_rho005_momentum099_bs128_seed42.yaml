@@ -1,4 +1,4 @@
-mnist_resnet18_sam_rho005_momentum08_bs128_seed42.yamldata:
+data:
   name: "mnist"
   batch_size: 128
   num_workers: 4
