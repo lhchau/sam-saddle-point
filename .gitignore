@@ -1,8 +1,11 @@
 __pycache__
 data/cifar-10*
+data/MNIST
+data/FashionMNIST
 src.egg-info
 wandb
 checkpoint/cifar*
+checkpoint/*
 tiny-imagenet-200
 checkpoint/Does*
 dnsam.egg-info
