@@ -85,7 +85,7 @@ class HSAM(torch.optim.Optimizer):
                )
         return norm
     
-    def _grad_norm(self):
+    def _hessian_norm(self):
         shared_device = self.param_groups[0]["params"][0].device  # put everything on the same device, in case of model parallelism
         norm = torch.norm(
                     torch.stack([
