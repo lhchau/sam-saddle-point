@@ -21,5 +21,4 @@ model:
 
 wandb:
   name: "resnet18_rho01_bs1024_seed42"
-  project: "High-Rho-SAM-CIFAR100"
-
+  project: "Rho-SAM-Test-CIFAR100"

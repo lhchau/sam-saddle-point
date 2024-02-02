@@ -14,7 +14,7 @@ class HSAM(torch.optim.Optimizer):
         self.hsam_beta = hsam_beta
         self.ema_beta = 0.95
         self.bs = bs
-        self.hessian_rho = 0.03
+        self.hessian_rho = 1
 
     @torch.no_grad()
     def first_step(self, zero_grad=False):
@@ -33,21 +33,23 @@ class HSAM(torch.optim.Optimizer):
                     exp_avg.mul_(self.ema_beta).add_(p.grad, alpha=1 - self.ema_beta)
                 self.state[p]['exp_avg'] = exp_avg
                 
-                # ascent_grad = (exp_avg.abs() / (self.hessian_rho * self.bs * self.state[p]['hessian'] + 1e-15)).clamp(None, 1)
-                # ascent_grad.mul_(exp_avg.sign())
+                ascent_grad = (exp_avg.abs() / (self.hessian_rho * self.bs * self.state[p]['hessian'] + 1e-15)).clamp(None, 1)
+                ascent_grad.mul_(exp_avg.sign())
                 
-                # self.state[p]['ascent_grad'] = ascent_grad
+                self.state[p]['ascent_grad'] = ascent_grad
         
         grad_norm = self._grad_norm()
         hessian_norm = self._hessian_norm()
+        
         for group in self.param_groups:
-            scale = (group['rho'] / (grad_norm * hessian_norm * self.bs * self.hessian_rho + 1e-12)).clamp(None, 1)
+            scale = group['rho'] / (grad_norm + 1e-12)
+            self.grad_norm, self.hessian_norm, self.scale = grad_norm, hessian_norm, scale
 
             for p in group["params"]:
                 if p.grad is None: continue
                 self.state[p]["old_p"] = p.data.clone()
                 
-                e_w = self.state[p]['exp_avg'] * scale.to(p)
+                e_w = self.state[p]['ascent_grad'] * scale.to(p)
                 
                 p.add_(e_w)  # climb to the local maximum "w + e(w)"
 
@@ -77,7 +79,7 @@ class HSAM(torch.optim.Optimizer):
         shared_device = self.param_groups[0]["params"][0].device  # put everything on the same device, in case of model parallelism
         norm = torch.norm(
                     torch.stack([
-                        (self.state[p]['exp_avg']).norm(p=2).to(shared_device)
+                        self.state[p]['exp_avg'].norm(p=2).to(shared_device)
                         for group in self.param_groups for p in group["params"]
                         if p.grad is not None
                     ]),
@@ -96,6 +98,9 @@ class HSAM(torch.optim.Optimizer):
                     p=2
                )
         return norm
+    
+    def get_norm(self):
+        return self.grad_norm, self.hessian_norm, self.scale
     
     def load_state_dict(self, state_dict):
         super().load_state_dict(state_dict)

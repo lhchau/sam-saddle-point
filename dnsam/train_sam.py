@@ -113,8 +113,12 @@ def train(epoch):
         
         # get cosine similarity
         similarity = np.mean([cosine_similarity(grad1, grad2) for grad1, grad2 in zip(first_grads, second_grads)])
+        grad_norm, hessian_norm, scale = optimizer.get_norm()
         wandb.log({
             'similarity': similarity,
+            'grad_norm': grad_norm,
+            'hessian_norm': hessian_norm,
+            'scale': scale
         })
 
         

@@ -11,15 +11,15 @@ trainer:
 
 model:
   architecture: "resnet18"
-  name: "sam"
-  lr: 0.1
+  name: "hsam"
+  lr: 0.01
   momentum: 0.9
   weight_decay: 0.001
-  rho: 0.2
+  rho: 0.05
+  hsam_beta: 0.95
   adaptive: False
   nesterov: False
 
 wandb:
-  name: "resnet18_rho02_bs1024_seed42"
-  project: "Rho-SAM-Test-CIFAR100"
-
+  name: "resnet18_hsam_hrho1_rho005_bs1024_seed42"
+  project: "SAM-Saddle-Point-CIFAR100"
