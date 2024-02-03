@@ -153,7 +153,7 @@ class ResNet(nn.Module):
         return out
 
 def ResNet18_MNIST(num_classes, channels=1):
-    return ResNet(BasicBlock_noshortcut, [2, 2, 2, 2], num_classes, channels)
+    return ResNet(BasicBlock, [2, 2, 2, 2], num_classes, channels)
 
 def ResNet18(num_classes=10):
     return ResNet(BasicBlock, [2, 2, 2, 2], num_classes)
@@ -164,6 +164,8 @@ def ResNet18_noshort(num_classes):
 def ResNet34(num_classes=10):
     return ResNet(BasicBlock, [3, 4, 6, 3], num_classes)
 
+def ResNet34_MNIST(num_classes, channels=1):
+    return ResNet(BasicBlock, [3, 4, 6, 3], num_classes, channels)
 
 def ResNet50(num_classes=10):
     return ResNet(Bottleneck, [3, 4, 6, 3], num_classes)

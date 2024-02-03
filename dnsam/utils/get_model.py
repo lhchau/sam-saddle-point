@@ -19,5 +19,7 @@ def get_model(cfg, num_classes):
         return ResNet18_noshort(num_classes=num_classes)
     elif cfg["model"]["architecture"] == "resnet18_mnist":
         return ResNet18_MNIST(num_classes=num_classes)
+    elif cfg["model"]["architecture"] == "resnet34_mnist":
+        return ResNet34_MNIST(num_classes=num_classes)
     else:
         raise ValueError("Invalid model!!!")
