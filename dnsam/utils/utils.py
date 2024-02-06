@@ -16,6 +16,22 @@ import numpy as np
 
 import math
 
+class RhoStepScheduler:
+    def __init__(self, optimizer, rho: float, milestones: int, total_epochs: int, last_epoch=-1):
+        self.optimizer = optimizer
+        self.milestones = milestones
+        self.total_epochs = total_epochs
+        self.rho = rho
+        self.epoch = 0
+
+    def step(self, epoch):
+        if epoch >= self.milestones and epoch < self.total_epochs - 10:
+            rho = self.rho / 2
+        else: rho = self.rho
+            
+        for group in self.optimizer.param_groups:
+            group["rho"] = rho
+
 class RhoScheduler:
     def __init__(self, optimizer, rho: float, warmup_epochs: int, total_epochs: int, min_rho: float = 0.05, last_epoch=-1):
         self.optimizer = optimizer

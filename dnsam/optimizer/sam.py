@@ -14,7 +14,7 @@ class SAM(torch.optim.Optimizer):
         self.hsam_beta = 0.95
 
     @torch.no_grad()
-    def first_step(self, zero_grad=False):
+    def first_step(self, zero_grad=False):        
         for group in self.param_groups:            
             for i, p in enumerate(group["params"]):
                 if p.grad is None: continue
@@ -37,6 +37,8 @@ class SAM(torch.optim.Optimizer):
                 
                 p.add_(e_w)  # climb to the local maximum "w + e(w)"
 
+        self.weight_norm1 = self.get_weight_norm()
+        
         if zero_grad: self.zero_grad()
 
     @torch.no_grad()
@@ -47,6 +49,8 @@ class SAM(torch.optim.Optimizer):
                 p.data = self.state[p]["old_p"]  # get back to "w" from "w + e(w)"
 
         self.base_optimizer.step()  # do the actual "sharpness-aware" update
+
+        self.weight_norm2 = self.get_weight_norm()
 
         if zero_grad: self.zero_grad()
 
@@ -83,8 +87,16 @@ class SAM(torch.optim.Optimizer):
                )
         return norm
     
+    def get_weight_norm(self):
+        total_norm = 0
+        for group in self.param_groups:
+            for p in group["params"]:
+                if p.grad is not None:
+                    total_norm += torch.norm(p, p=2).item() ** 2
+        return total_norm ** 0.5
+    
     def get_norm(self):
-        return self.grad_norm, self.hessian_norm, self.scale
+        return self.grad_norm, self.hessian_norm, self.scale, self.weight_norm1, self.weight_norm2
     
     def load_state_dict(self, state_dict):
         super().load_state_dict(state_dict)

@@ -14,7 +14,7 @@ class HSAM(torch.optim.Optimizer):
         self.hsam_beta = hsam_beta
         self.ema_beta = 0.95
         self.bs = bs
-        self.hessian_rho = 1
+        self.hessian_rho = 0.03
 
     @torch.no_grad()
     def first_step(self, zero_grad=False):
@@ -42,14 +42,14 @@ class HSAM(torch.optim.Optimizer):
         hessian_norm = self._hessian_norm()
         
         for group in self.param_groups:
-            scale = group['rho'] / (grad_norm + 1e-12)
+            scale = group['rho']
             self.grad_norm, self.hessian_norm, self.scale = grad_norm, hessian_norm, scale
 
             for p in group["params"]:
                 if p.grad is None: continue
                 self.state[p]["old_p"] = p.data.clone()
                 
-                e_w = self.state[p]['ascent_grad'] * scale.to(p)
+                e_w = self.state[p]['ascent_grad'] * scale
                 
                 p.add_(e_w)  # climb to the local maximum "w + e(w)"
 

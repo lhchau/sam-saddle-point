@@ -14,12 +14,11 @@ model:
   name: "sam"
   lr: 0.1
   momentum: 0.9
-  weight_decay: 0.001
+  weight_decay: 0
   rho: 1
   adaptive: False
   nesterov: False
 
 wandb:
-  name: "resnet18_rho1_bs128_seed42"
-  project: "High-Rho-SAM-CIFAR100"
-
+  name: "resnet18_rho1_momen09_bs128_seed42"
+  project: "SAM-Observation-Cifar100"
