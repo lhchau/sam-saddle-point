@@ -10,6 +10,7 @@ import os
 import argparse
 import wandb
 import yaml
+import pprint
 
 from dnsam.models import *
 from dnsam.utils import *
@@ -26,7 +27,7 @@ yaml_filepath = os.path.join(".", "config", f"{args.experiment}.yaml")
 with open(yaml_filepath, "r") as yamlfile:
     cfg = yaml.load(yamlfile, Loader=yaml.FullLoader)
     print("==> Read YAML config file successfully ...")
-
+    pprint.pprint(cfg)
 seed = cfg['trainer'].get('seed', 42)
 initialize(seed)
 
@@ -82,8 +83,8 @@ scheduler = get_scheduler(optimizer, cfg)
 
 warmup_flag = cfg['trainer'].get('warmup', None)
 if warmup_flag is not None:
-    rho_scheduler = RhoStepScheduler(optimizer, rho=cfg['model']['rho'], milestones=110, total_epochs=EPOCHS)
-    # rho_scheduler = RhoScheduler(optimizer, cfg['model']['rho'], warmup_epochs=cfg['trainer']['warmup'], total_epochs=EPOCHS)
+    # rho_scheduler = RhoStepScheduler(optimizer, rho=cfg['model']['rho'], milestones=110, total_epochs=EPOCHS)
+    rho_scheduler = RhoScheduler(optimizer, cfg['model']['rho'], warmup_epochs=cfg['trainer']['warmup'], total_epochs=EPOCHS)
 # Training
 def train(epoch):
     print('\nEpoch: %d' % epoch)

@@ -182,3 +182,6 @@ class Network(nn.Module):
     
 def WideResnet28_10(num_classes):
     return Network(input_shape=(1, 3, 32, 32), num_classes=num_classes, depth=28, widening_factor=10, base_channels=16)  
+
+def WideResnet28_10_MNIST(num_classes):
+    return Network(input_shape=(1, 1, 32, 32), num_classes=num_classes, depth=28, widening_factor=10, base_channels=16)  

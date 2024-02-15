@@ -22,5 +22,5 @@ model:
 
 wandb:
   name: "resnet18_rho1_warmup50_bs128_seed42"
-  project: "SAM-Saddle-Point-CIFAR100"
+  project: "SAM-ECCV-CIFAR100"
 

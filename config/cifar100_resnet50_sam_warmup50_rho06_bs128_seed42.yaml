@@ -7,18 +7,18 @@ data:
   - 0.1
 model:
   adaptive: false
-  architecture: resnet18
+  architecture: resnet50
   lr: 0.1
   momentum: 0.9
   name: sam
   nesterov: false
-  rho: 1
-  weight_decay: 0.0001
+  rho: 0.6
+  weight_decay: 0.001
 trainer:
   epochs: 200
-  warmup: 20
   sch: cosine_annealing_lr
   seed: 42
+  warmup: 50
 wandb:
-  name: resnet18_rho1_wd00001_warmup20_bs128_seed42
-  project: SAM-Thesis-CIFAR100
+  name: resnet50_rho06_warmup50_bs128_seed42
+  project: SAM-ECCV-CIFAR100
