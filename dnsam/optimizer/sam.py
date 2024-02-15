@@ -11,7 +11,7 @@ class SAM(torch.optim.Optimizer):
         self.base_optimizer = base_optimizer(self.param_groups, **kwargs)
         self.param_groups = self.base_optimizer.param_groups
         self.defaults.update(self.base_optimizer.defaults)
-        self.hsam_beta = 0.95
+        # self.hsam_beta = 0.95
 
     @torch.no_grad()
     def first_step(self, zero_grad=False):        
@@ -19,16 +19,16 @@ class SAM(torch.optim.Optimizer):
             for i, p in enumerate(group["params"]):
                 if p.grad is None: continue
 
-                if 'hessian' not in self.state[p].keys():
-                    self.state[p]['hessian'] = torch.zeros_like(p, memory_format=torch.preserve_format)
-                self.state[p]['hessian'].mul_(self.hsam_beta).addcmul_(p.grad, p.grad, value=1 - self.hsam_beta)
+                # if 'hessian' not in self.state[p].keys():
+                #     self.state[p]['hessian'] = torch.zeros_like(p, memory_format=torch.preserve_format)
+                # self.state[p]['hessian'].mul_(self.hsam_beta).addcmul_(p.grad, p.grad, value=1 - self.hsam_beta)
         
         grad_norm = self._grad_norm()
-        hessian_norm = self._hessian_norm()
+        # hessian_norm = self._hessian_norm()
         
         for group in self.param_groups:
             scale = group["rho"] / (grad_norm + 1e-12)
-            self.grad_norm, self.hessian_norm, self.scale = grad_norm, hessian_norm, scale
+            # self.grad_norm, self.hessian_norm, self.scale = grad_norm, hessian_norm, scale
 
             for p in group["params"]:
                 if p.grad is None: continue
@@ -37,7 +37,7 @@ class SAM(torch.optim.Optimizer):
                 
                 p.add_(e_w)  # climb to the local maximum "w + e(w)"
 
-        self.weight_norm1 = self.get_weight_norm()
+        # self.weight_norm1 = self.get_weight_norm()
         
         if zero_grad: self.zero_grad()
 
@@ -50,7 +50,7 @@ class SAM(torch.optim.Optimizer):
 
         self.base_optimizer.step()  # do the actual "sharpness-aware" update
 
-        self.weight_norm2 = self.get_weight_norm()
+        # self.weight_norm2 = self.get_weight_norm()
 
         if zero_grad: self.zero_grad()
 
