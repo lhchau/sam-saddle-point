@@ -1,13 +1,13 @@
 data:
   batch_size: 128
-  name: cifar100
+  name: fashion_mnist
   num_workers: 4
   split:
   - 0.9
   - 0.1
 model:
   adaptive: false
-  architecture: resnet18
+  architecture: resnet18_mnist
   lr: 0.1
   momentum: 0.9
   name: sam
@@ -20,4 +20,4 @@ trainer:
   seed: 42
 wandb:
   name: resnet18_rho1_bs128_seed42
-  project: SAM-ECCV-CIFAR100
+  project: SAM-ECCV-FASHION_MNIST

@@ -15,9 +15,9 @@ class SAM(torch.optim.Optimizer):
 
     @torch.no_grad()
     def first_step(self, zero_grad=False):        
-        for group in self.param_groups:            
-            for i, p in enumerate(group["params"]):
-                if p.grad is None: continue
+        # for group in self.param_groups:            
+        #     for i, p in enumerate(group["params"]):
+        #         if p.grad is None: continue
 
                 # if 'hessian' not in self.state[p].keys():
                 #     self.state[p]['hessian'] = torch.zeros_like(p, memory_format=torch.preserve_format)

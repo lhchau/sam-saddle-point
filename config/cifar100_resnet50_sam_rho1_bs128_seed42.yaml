@@ -7,7 +7,7 @@ data:
   - 0.1
 model:
   adaptive: false
-  architecture: resnet18
+  architecture: resnet50
   lr: 0.1
   momentum: 0.9
   name: sam
@@ -19,5 +19,5 @@ trainer:
   sch: cosine_annealing_lr
   seed: 42
 wandb:
-  name: resnet18_rho1_bs128_seed42
+  name: resnet50_rho1_bs128_seed42
   project: SAM-ECCV-CIFAR100

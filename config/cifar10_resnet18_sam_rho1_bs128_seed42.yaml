@@ -1,6 +1,6 @@
 data:
   batch_size: 128
-  name: cifar100
+  name: cifar10
   num_workers: 4
   split:
   - 0.9
@@ -20,4 +20,4 @@ trainer:
   seed: 42
 wandb:
   name: resnet18_rho1_bs128_seed42
-  project: SAM-ECCV-CIFAR100
+  project: SAM-ECCV-CIFAR10
