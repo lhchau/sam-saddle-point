@@ -85,6 +85,7 @@ warmup_flag = cfg['trainer'].get('warmup', None)
 if warmup_flag is not None:
     # rho_scheduler = RhoStepScheduler(optimizer, rho=cfg['model']['rho'], milestones=110, total_epochs=EPOCHS)
     rho_scheduler = RhoScheduler(optimizer, cfg['model']['rho'], warmup_epochs=cfg['trainer']['warmup'], total_epochs=EPOCHS)
+    rho_scheduler.step(-1)
 # Training
 def train(epoch):
     print('\nEpoch: %d' % epoch)

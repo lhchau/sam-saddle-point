@@ -39,12 +39,14 @@ class RhoScheduler:
         self.total_epochs = total_epochs
         self.max_rho = rho
         self.min_rho = min_rho
-        self.epoch = 0
 
     def step(self, epoch):
-        if epoch < self.warmup_epochs:
-            rho = self.min_rho + (self.max_rho - self.min_rho) * (epoch + 1) / self.warmup_epochs
-        else: rho = self.max_rho
+        if epoch == -1:
+            rho = self.min_rho
+        else:
+            if epoch < self.warmup_epochs:
+                rho = self.min_rho + (self.max_rho - self.min_rho) * (epoch + 1) / self.warmup_epochs
+            else: rho = self.max_rho
             
         for group in self.optimizer.param_groups:
             group["rho"] = rho
