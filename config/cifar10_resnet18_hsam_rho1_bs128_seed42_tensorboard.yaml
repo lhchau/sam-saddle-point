@@ -1,0 +1,22 @@
+data:
+  batch_size: 128
+  name: cifar10
+  num_workers: 8
+  split:
+  - 0.9
+  - 0.1
+model:
+  adaptive: false
+  architecture: resnet18
+  lr: 0.1
+  momentum: 0.9
+  name: hsam
+  nesterov: false
+  rho: 1
+  weight_decay: 0.001
+  hsam_beta: 0.95
+trainer:
+  epochs: 200
+  sch: cosine_annealing_lr
+  seed: 42
+name: resnet18_rho1_hsam_bs128_seed42
