@@ -35,7 +35,7 @@ for dataset in dataset_list:
                     config['trainer']['threshold'] = threshold
                     config['trainer']['factor'] = factor
                     
-                    config['wandb']['project'] = config['wandb']['project'].replace("CIFAR10", dataset.upper())
+                    config['wandb']['project'] = config['wandb']['project'].replace("CIFAR100", dataset.upper()).replace("42", str(seed))
 
                     # Save updated content to a new file
                     with open(f'./config/{name}.yaml', 'w') as file:

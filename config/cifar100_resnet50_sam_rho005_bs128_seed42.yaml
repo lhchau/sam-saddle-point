@@ -7,7 +7,7 @@ data:
   - 0.1
 model:
   adaptive: false
-  architecture: resnet18
+  architecture: resnet50
   lr: 0.1
   momentum: 0.9
   name: sam
@@ -16,10 +16,8 @@ model:
   weight_decay: 0.001
 trainer:
   epochs: 200
-  factor: 1.0001
   sch: cosine_annealing_lr
-  seed: 44
-  threshold: 0.95
+  seed: 42
 wandb:
-  name: resnet18_adaptive_rho005_simple095_10001_bs128_seed43
-  project: SAM-Adaptive-Rho-CIFAR1000
+  name: resnet50_rho005_bs128_seed42
+  project: SAM-Adaptive-Rho-CIFAR100
