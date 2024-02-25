@@ -1,0 +1,9 @@
+python dnsam/train_sam.py --experiment=fashion_mnist_wrn28_10_sam_warmup50_rho08_bs128_seed42
+python dnsam/train_sam.py --experiment=fashion_mnist_wrn28_10_sam_warmup50_rho1_bs128_seed42
+python dnsam/train_sam.py --experiment=cifar100_wrn28_10_sam_warmup50_rho1_bs128_seed42
+python dnsam/train_sam.py --experiment=cifar10_wrn28_10_sam_warmup50_rho06_bs128_seed42
+python dnsam/train_sam.py --experiment=fashion_mnist_wrn28_10_sam_warmup50_rho06_bs128_seed42
+python dnsam/train_sam.py --experiment=cifar100_wrn28_10_sam_warmup50_rho06_bs128_seed42
+python dnsam/train_sam.py --experiment=cifar10_wrn28_10_sam_warmup50_rho1_bs128_seed42
+python dnsam/train_sam.py --experiment=cifar100_wrn28_10_sam_warmup50_rho08_bs128_seed42
+python dnsam/train_sam.py --experiment=cifar10_wrn28_10_sam_warmup50_rho08_bs128_seed42
