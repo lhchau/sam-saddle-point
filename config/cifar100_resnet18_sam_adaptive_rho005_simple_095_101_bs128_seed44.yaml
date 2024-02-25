@@ -12,12 +12,14 @@ model:
   momentum: 0.9
   name: sam
   nesterov: false
-  rho: 0.8
+  rho: 0.05
   weight_decay: 0.001
 trainer:
   epochs: 200
+  factor: 1.01
   sch: cosine_annealing_lr
-  seed: 42
+  seed: 44
+  threshold: 0.95
 wandb:
-  name: resnet18_rho08_bs128_seed42
-  project: SAM-ECCV-CIFAR100
+  name: resnet18_adaptive_rho005_simple095_101_bs128_seed43
+  project: SAM-Adaptive-Rho-CIFAR1000

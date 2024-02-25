@@ -7,18 +7,19 @@ data:
   - 0.1
 model:
   adaptive: false
-  architecture: resnet18
+  architecture: wrn28_10
   lr: 0.1
   momentum: 0.9
   name: sam
   nesterov: false
-  rho: 1
+  rho: 0.05
   weight_decay: 0.001
 trainer:
   epochs: 200
   sch: cosine_annealing_lr
   seed: 42
-  warmup: 50
+  threshold: 0.95
+  factor: 1.001
 wandb:
-  name: resnet18_rho1_warmup50_bs128_seed42
-  project: SAM-ECCV-CIFAR100
+  name: wrn28_10_adaptive_rho005_simple095_1001_bs128_seed42
+  project: SAM-Adaptive-Rho-CIFAR100

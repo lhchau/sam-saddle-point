@@ -60,6 +60,13 @@ if device == 'cuda':
 total_params = sum(p.numel() for p in net.parameters())
 print(f'==> Number of parameters in {cfg["model"]["architecture"]}: {total_params}')
 
+# layer_names = [name for name, _ in net.named_parameters()]
+# print(layer_names)
+# raise exit
+idx_inc_rho = 16
+adaptive_rho = [0.05 for name, _ in net.named_parameters()][:-idx_inc_rho]
+adaptive_rho = adaptive_rho + [1 for i in range(idx_inc_rho)]
+
 criterion = nn.CrossEntropyLoss()
 
 sch = cfg['trainer'].get('sch', None)
@@ -67,7 +74,7 @@ print(f"==> Loading optimizer: {cfg['model']['name']}")
 print(f"==> Loading scheduler: {sch}")
 
 base_optimizer = optim.SGD
-optimizer = get_optimizer(net, base_optimizer, cfg)
+optimizer = get_optimizer(net, base_optimizer, cfg, adaptive_rho)
 scheduler = get_scheduler(optimizer, cfg)
 
 warmup_flag = cfg['trainer'].get('warmup', None)

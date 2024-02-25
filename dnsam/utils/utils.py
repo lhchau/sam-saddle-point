@@ -32,6 +32,25 @@ class RhoStepScheduler:
         for group in self.optimizer.param_groups:
             group["rho"] = rho
 
+class RhoCosineScheduler:
+    def __init__(self, optimizer, rho: float, warmup_epochs: int, total_epochs: int, min_rho: float = 0.01, last_epoch=-1):
+        self.optimizer = optimizer
+        self.warmup_epochs = warmup_epochs
+        self.total_epochs = total_epochs
+        self.max_rho = rho
+        self.min_rho = min_rho
+
+    def step(self, epoch):
+        if epoch == -1:
+            rho = self.min_rho
+        else:
+            if epoch < self.warmup_epochs:
+                rho = self.min_rho +  (self.max_rho - self.min_rho) * 0.5 * (1 - math.cos(math.pi * epoch / self.warmup_epochs))
+            else: rho = self.max_rho
+            
+        for group in self.optimizer.param_groups:
+            group["rho"] = rho
+
 class RhoScheduler:
     def __init__(self, optimizer, rho: float, warmup_epochs: int, total_epochs: int, min_rho: float = 0.01, last_epoch=-1):
         self.optimizer = optimizer
@@ -50,6 +69,29 @@ class RhoScheduler:
             
         for group in self.optimizer.param_groups:
             group["rho"] = rho
+        
+class RhoSimilarityScheduler:
+    def __init__(self, optimizer, threshold=0.95, factor=1.001, last_epoch=-1):
+        self.optimizer = optimizer
+        self.threshold = threshold
+        self.factor = factor
+        self.similarity = 0
+
+    def step(self, similarity):
+        for group in self.optimizer.param_groups:
+            curr_rho = group["rho"]
+        if self.similarity == 0:
+            self.similarity = similarity
+        else:
+            self.similarity = self.similarity * 0.9 + similarity * 0.1
+        
+        if self.similarity >= self.threshold:
+            new_rho = curr_rho * self.factor
+        else:
+            new_rho = curr_rho / self.factor
+        
+        for group in self.optimizer.param_groups:
+            group["rho"] = new_rho
         
 def cosine_similarity(grad1, grad2):
     dot_product = torch.sum(grad1 * grad2)

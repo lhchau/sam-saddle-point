@@ -20,4 +20,4 @@ trainer:
   seed: 42
 wandb:
   name: resnet50_rho1_bs128_seed42
-  project: SAM-Thesis-CIFAR100
+  project: SAM-ECCV-CIFAR100

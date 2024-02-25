@@ -83,9 +83,13 @@ scheduler = get_scheduler(optimizer, cfg)
 
 warmup_flag = cfg['trainer'].get('warmup', None)
 if warmup_flag is not None:
-    # rho_scheduler = RhoStepScheduler(optimizer, rho=cfg['model']['rho'], milestones=110, total_epochs=EPOCHS)
-    rho_scheduler = RhoScheduler(optimizer, cfg['model']['rho'], warmup_epochs=cfg['trainer']['warmup'], total_epochs=EPOCHS)
+    if 'cosine' in name:
+        rho_scheduler = RhoCosineScheduler(optimizer, cfg['model']['rho'], warmup_epochs=cfg['trainer']['warmup'], total_epochs=EPOCHS)
+    else:
+        rho_scheduler = RhoScheduler(optimizer, cfg['model']['rho'], warmup_epochs=cfg['trainer']['warmup'], total_epochs=EPOCHS)
     rho_scheduler.step(-1)
+elif 'adaptive' in name:
+    rho_scheduler = RhoSimilarityScheduler(optimizer, cfg['trainer']['threshold'], cfg['trainer']['factor'])
 # Training
 def train(epoch):
     print('\nEpoch: %d' % epoch)
@@ -115,16 +119,23 @@ def train(epoch):
         optimizer.zero_grad()
         
         # get cosine similarity
-        # similarity = np.mean([cosine_similarity(grad1, grad2) for grad1, grad2 in zip(first_grads, second_grads)])
+        similarity = np.mean([cosine_similarity(grad1, grad2) for grad1, grad2 in zip(first_grads, second_grads)])
         # grad_norm, hessian_norm, scale, weight_norm1, weight_norm2 = optimizer.get_norm()
-        # wandb.log({
-        #     'similarity': similarity,
+        for group in optimizer.param_groups:
+            rho_value = group['rho']
+            
+        wandb.log({
+            'similarity': similarity,
+            'rho_value': float(rho_value)
         #     'grad_norm': grad_norm,
         #     'hessian_norm': hessian_norm,
         #     'scale': scale,
         #     'weight_norm1': weight_norm1,
         #     'weight_norm1': weight_norm2
-        # })
+        })
+        
+        if 'adaptive' in name:
+            rho_scheduler.step(similarity)
 
         
         train_loss += first_loss.item()
