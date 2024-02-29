@@ -76,6 +76,8 @@ class RhoSimilarityScheduler:
         self.threshold = threshold
         self.factor = factor
         self.similarity = 0
+        for group in self.optimizer.param_groups:
+            self.init_rho = group["rho"]
 
     def step(self, similarity):
         for group in self.optimizer.param_groups:
@@ -89,6 +91,9 @@ class RhoSimilarityScheduler:
             new_rho = curr_rho * self.factor
         else:
             new_rho = curr_rho / self.factor
+            
+        if new_rho < self.init_rho:
+            new_rho = self.init_rho
         
         for group in self.optimizer.param_groups:
             group["rho"] = new_rho
@@ -98,6 +103,7 @@ def cosine_similarity(grad1, grad2):
     norm_grad1 = torch.norm(grad1)
     norm_grad2 = torch.norm(grad2)
     similarity = dot_product / (norm_grad1 * norm_grad2 + 1e-18)
+    # similarity = torch.nn.functional.cosine_similarity(grad1.view(-1), grad2.view(-1), dim=0)
     return similarity.item()
 
 def get_gradients(optimizer):
