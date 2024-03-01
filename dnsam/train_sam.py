@@ -120,18 +120,16 @@ def train(epoch):
         
         # get cosine similarity
         similarity = np.mean([cosine_similarity(grad1, grad2) for grad1, grad2 in zip(first_grads, second_grads)])
-        # grad_norm, hessian_norm, scale, weight_norm1, weight_norm2 = optimizer.get_norm()
+        grad_norm, scale = optimizer.get_log()
+        
         for group in optimizer.param_groups:
             rho_value = group['rho']
             
         wandb.log({
             'similarity': similarity,
-            'rho_value': float(rho_value)
-        #     'grad_norm': grad_norm,
-        #     'hessian_norm': hessian_norm,
-        #     'scale': scale,
-        #     'weight_norm1': weight_norm1,
-        #     'weight_norm1': weight_norm2
+            'rho_value': float(rho_value),
+            'grad_norm': grad_norm,
+            'scale': scale,
         })
         
         if 'adaptive' in name:
