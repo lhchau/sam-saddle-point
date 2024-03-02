@@ -22,7 +22,6 @@ def get_optimizer(net, base_optimizer, cfg):
             rho=cfg['model']['rho'], 
             adaptive=cfg['model']['adaptive'],
             nesterov=cfg['model']['nesterov'],
-            alpha=cfg['model']['alpha']
         )
     elif cfg['model']['name'] == 'sam_faster':
         return SAM_Faster(
