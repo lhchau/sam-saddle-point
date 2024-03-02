@@ -92,8 +92,8 @@ class RhoSimilarityScheduler:
         else:
             new_rho = curr_rho / self.factor
             
-        if new_rho < self.init_rho:
-            new_rho = self.init_rho
+        # if new_rho < self.init_rho:
+        #     new_rho = self.init_rho
         
         for group in self.optimizer.param_groups:
             group["rho"] = new_rho
