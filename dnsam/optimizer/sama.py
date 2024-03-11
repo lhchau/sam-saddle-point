@@ -1,56 +1,32 @@
 import torch
+import math
 
 
-class HSAM(torch.optim.Optimizer):
-    def __init__(self, params, base_optimizer, hsam_beta=0.95, bs=128, rho=0.05, adaptive=False, **kwargs):
+class SAMA(torch.optim.Optimizer):
+    def __init__(self, params, base_optimizer, rho=0.05, adaptive=False, beta=0.9, **kwargs):
         assert rho >= 0.0, f"Invalid rho, should be non-negative: {rho}"
 
         defaults = dict(rho=rho, adaptive=adaptive, **kwargs)
-        super(HSAM, self).__init__(params, defaults)
+        super(SAMA, self).__init__(params, defaults)
 
         self.base_optimizer = base_optimizer(self.param_groups, **kwargs)
         self.param_groups = self.base_optimizer.param_groups
         self.defaults.update(self.base_optimizer.defaults)
-        self.beta1 = 0.965
-        self.beta2 = hsam_beta
-        self.bs = bs
-        self.hessian_rho = 1
+        self.state['step'] = 0
+        self.beta = beta
 
     @torch.no_grad()
-    def first_step(self, zero_grad=False):
-        for group in self.param_groups:            
-            for i, p in enumerate(group["params"]):
-                if p.grad is None: continue
-
-                if 'hessian' not in self.state[p].keys():
-                    self.state[p]['hessian'] = torch.zeros_like(p, memory_format=torch.preserve_format)
-                self.state[p]['hessian'].mul_(self.beta2).addcmul_(p.grad, p.grad, value=1 - self.beta2)
-                
-                exp_avg = self.state[p].get('exp_avg', None)
-                if exp_avg is None:
-                    exp_avg = torch.clone(p.grad).detach()
-                    exp_avg.mul_(1 - self.beta1)
-                else:
-                    exp_avg.mul_(self.beta1).add_(p.grad, alpha=1 - self.beta1)
-                self.state[p]['exp_avg'] = exp_avg
-                
-                ascent_grad = (exp_avg.abs() / (self.hessian_rho * self.bs * self.state[p]['hessian'] + 1e-15)).clamp(None, 1)
-                ascent_grad.mul_(exp_avg.sign())
-                
-                self.state[p]['ascent_grad'] = ascent_grad
-        
+    def first_step(self, zero_grad=False):        
         grad_norm = self._grad_norm()
         
         for group in self.param_groups:
-            scale = group['rho']
-            self.grad_norm, self.scale = grad_norm, scale
-
+            scale = group["rho"] / (grad_norm + 1e-12)
+            
             for p in group["params"]:
                 if p.grad is None: continue
                 self.state[p]["old_p"] = p.data.clone()
-                
-                e_w = self.state[p]['ascent_grad'] * scale
-                
+                self.state[p]["old_g"] = p.grad.clone()
+                e_w = (torch.pow(p, 2) if group["adaptive"] else 1.0) * p.grad * scale.to(p)
                 p.add_(e_w)  # climb to the local maximum "w + e(w)"
 
         if zero_grad: self.zero_grad()
@@ -60,7 +36,21 @@ class HSAM(torch.optim.Optimizer):
         for group in self.param_groups:
             for p in group["params"]:
                 if p.grad is None: continue
+                
+                self.state['step'] += 1
+                bias_correction = 1 - self.beta ** self.state['step']
+
+                estimated_hess = (self.state[p]["old_g"] - p.grad) / (p.data - self.state[p]["old_p"] + 1e-12)
+                if 'hess' not in self.state[p].keys():
+                    self.state[p]['hess'] = estimated_hess.data.clone()
+                else:
+                    self.state[p]['hess'].mul_(self.beta).add_(estimated_hess, alpha=1-self.beta)
+                denom = self.state[p]['hess'].abs().add_(1e-12).sqrt() / math.sqrt(bias_correction)
+
                 p.data = self.state[p]["old_p"]  # get back to "w" from "w + e(w)"
+                
+                p.grad.div_(denom)
+                p.grad = p.grad.clamp(None, 1)
 
         self.base_optimizer.step()  # do the actual "sharpness-aware" update
 
@@ -79,16 +69,13 @@ class HSAM(torch.optim.Optimizer):
         shared_device = self.param_groups[0]["params"][0].device  # put everything on the same device, in case of model parallelism
         norm = torch.norm(
                     torch.stack([
-                        self.state[p]['ascent_grad'].norm(p=2).to(shared_device)
+                        ((torch.abs(p) if group["adaptive"] else 1.0) * p.grad).norm(p=2).to(shared_device)
                         for group in self.param_groups for p in group["params"]
                         if p.grad is not None
                     ]),
                     p=2
                )
         return norm
-    
-    def get_log(self):
-        return self.grad_norm, self.scale
     
     def load_state_dict(self, state_dict):
         super().load_state_dict(state_dict)

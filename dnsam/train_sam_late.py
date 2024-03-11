@@ -27,6 +27,7 @@ yaml_filepath = os.path.join(".", "config", f"{args.experiment}.yaml")
 with open(yaml_filepath, "r") as yamlfile:
     cfg = yaml.load(yamlfile, Loader=yaml.FullLoader)
     print("==> Read YAML config file successfully ...")
+    pprint.pprint(cfg)
 seed = cfg['trainer'].get('seed', 42)
 initialize(seed)
 
@@ -35,6 +36,7 @@ best_acc = 0  # best test accuracy
 start_epoch = 0  # start from epoch 0 or last checkpoint epoch
 
 EPOCHS = cfg['trainer']['epochs'] 
+COSINE_EPOCHS = cfg['trainer']['epochs'] - 100
 
 name = cfg['wandb']['name']
 # Initialize Wandb
@@ -46,7 +48,6 @@ wandb.define_metric("train/*", step_metric="epoch")
 wandb.define_metric("val/*", step_metric="epoch")
 metrics = {}
 
-pprint.pprint(cfg)
 # Data
 data_name = cfg['data']['name']
 data_dict = get_dataloader(
@@ -77,8 +78,10 @@ sch = cfg['trainer'].get('sch', None)
 print(f"==> Loading optimizer: {cfg['model']['name']}")
 print(f"==> Loading scheduler: {sch}")
 
-optimizer = get_optimizer(net, cfg)
-scheduler = get_scheduler(optimizer, cfg)
+base_optimizer = optim.SGD
+optimizer = get_optimizer(net, base_optimizer, cfg)
+cosine_scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=COSINE_EPOCHS, eta_min=cfg['trainer']['eta_min'])
+constant_scheduler = torch.optim.lr_scheduler.ConstantLR(optimizer, factor=1, total_iters=EPOCHS-COSINE_EPOCHS)
 
 warmup_flag = cfg['trainer'].get('warmup', None)
 if warmup_flag is not None:
@@ -98,28 +101,52 @@ def train(epoch):
     total = 0
     for batch_idx, (inputs, targets) in enumerate(train_dataloader):
         inputs, targets = inputs.to(device), targets.to(device)
-        
         optimizer.zero_grad()
         enable_running_stats(net)  # <- this is the important line
         outputs = net(inputs)
         first_loss = criterion(outputs, targets)
         first_loss.backward()
-        optimizer.first_step(zero_grad=True)
+        optimizer.first_step(zero_grad=False)
         
+        # get ascent grads
+        first_grads = get_gradients(optimizer)
+        optimizer.zero_grad()
+
         disable_running_stats(net)  # <- this is the important line
         criterion(net(inputs), targets).backward()
-        optimizer.second_step(zero_grad=True)
+        optimizer.second_step(zero_grad=False)
         
-        with torch.no_grad():
-            train_loss += first_loss.item()
-            _, predicted = outputs.max(1)
-            total += targets.size(0)
-            correct += predicted.eq(targets).sum().item()
+        # get descent grads
+        second_grads = get_gradients(optimizer)
+        optimizer.zero_grad()
+        
+        # get cosine similarity
+        similarity = np.mean([cosine_similarity(grad1, grad2) for grad1, grad2 in zip(first_grads, second_grads)])
+        grad_norm, scale = optimizer.get_log()
+        
+        for group in optimizer.param_groups:
+            rho_value = group['rho']
+            
+        wandb.log({
+            'similarity': similarity,
+            'rho_value': float(rho_value),
+            'grad_norm': grad_norm,
+            'scale': scale,
+        })
+        
+        if 'adaptive' in name:
+            rho_scheduler.step(similarity)
 
-            train_loss_mean = train_loss/(batch_idx+1)
-            acc = 100.*correct/total
-            # progress_bar(batch_idx, len(train_dataloader), 'Loss: %.3f | Acc: %.3f%% (%d/%d)'
-            #          % (train_loss_mean, acc, correct, total))
+        
+        train_loss += first_loss.item()
+        _, predicted = outputs.max(1)
+        total += targets.size(0)
+        correct += predicted.eq(targets).sum().item()
+
+        train_loss_mean = train_loss/(batch_idx+1)
+        acc = 100.*correct/total
+        progress_bar(batch_idx, len(train_dataloader), 'Loss: %.3f | Acc: %.3f%% (%d/%d)'
+                     % (train_loss_mean, acc, correct, total))
         
     metrics['train/loss'] = train_loss_mean
     metrics['train/acc'] = acc
@@ -161,17 +188,17 @@ def val(epoch):
             os.mkdir(f'checkpoint/{data_name}_{name}_{current_time}')
         torch.save(state, f'./checkpoint/{data_name}_{name}_{current_time}/ckpt_best.pth')
         best_acc = acc
-    # if (epoch+1) % 20 == 0:
-    #     print(f'Saving epoch {epoch+1}..')
-    #     state = {
-    #         'net': net.state_dict(),
-    #         'acc': acc,
-    #         'loss': val_loss,
-    #         'epoch': epoch
-    #     }
-    #     if not os.path.isdir(f'checkpoint/{data_name}_{name}_{current_time}'):
-    #         os.mkdir(f'checkpoint/{data_name}_{name}_{current_time}')
-    #     torch.save(state, f'./checkpoint/{data_name}_{name}_{current_time}/{epoch+1}.pth')
+    if (epoch+1) % 100 == 0:
+        print(f'Saving epoch {epoch+1}..')
+        state = {
+            'net': net.state_dict(),
+            'acc': acc,
+            'loss': val_loss,
+            'epoch': epoch
+        }
+        if not os.path.isdir(f'checkpoint/{data_name}_{name}_{current_time}'):
+            os.mkdir(f'checkpoint/{data_name}_{name}_{current_time}')
+        torch.save(state, f'./checkpoint/{data_name}_{name}_{current_time}/{epoch+1}.pth')
     
     metrics['val/loss'] = val_loss_mean
     metrics['val/acc'] = acc
@@ -211,7 +238,9 @@ if __name__ == "__main__":
         train(epoch)
         val(epoch)
         wandb.log(metrics)
-        scheduler.step()
+        if epoch < COSINE_EPOCHS:
+            cosine_scheduler.step()
+        else: constant_scheduler.step()
         if warmup_flag is not None:
             rho_scheduler.step(epoch)
     test()

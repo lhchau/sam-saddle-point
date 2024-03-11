@@ -1,20 +1,17 @@
 import torch
 
 
-class HSAM(torch.optim.Optimizer):
-    def __init__(self, params, base_optimizer, hsam_beta=0.95, bs=128, rho=0.05, adaptive=False, **kwargs):
+class ADAMSAM(torch.optim.Optimizer):
+    def __init__(self, params, base_optimizer, betas=(0.965, 0.95), rho=0.05, adaptive=False, **kwargs):
         assert rho >= 0.0, f"Invalid rho, should be non-negative: {rho}"
 
         defaults = dict(rho=rho, adaptive=adaptive, **kwargs)
-        super(HSAM, self).__init__(params, defaults)
+        super(ADAMSAM, self).__init__(params, defaults)
 
         self.base_optimizer = base_optimizer(self.param_groups, **kwargs)
         self.param_groups = self.base_optimizer.param_groups
         self.defaults.update(self.base_optimizer.defaults)
-        self.beta1 = 0.965
-        self.beta2 = hsam_beta
-        self.bs = bs
-        self.hessian_rho = 1
+        self.beta1, self.beta2 = betas
 
     @torch.no_grad()
     def first_step(self, zero_grad=False):
@@ -34,7 +31,7 @@ class HSAM(torch.optim.Optimizer):
                     exp_avg.mul_(self.beta1).add_(p.grad, alpha=1 - self.beta1)
                 self.state[p]['exp_avg'] = exp_avg
                 
-                ascent_grad = (exp_avg.abs() / (self.hessian_rho * self.bs * self.state[p]['hessian'] + 1e-15)).clamp(None, 1)
+                ascent_grad = (exp_avg.abs() / (self.state[p]['hessian'].sqrt() + 1e-15)).clamp(None, 1)
                 ascent_grad.mul_(exp_avg.sign())
                 
                 self.state[p]['ascent_grad'] = ascent_grad

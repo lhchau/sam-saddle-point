@@ -1,6 +1,8 @@
-from ..optimizer import SAM, SAM_Faster, DNSAM, RDNSAM, DSAM, FDNSAM, HSAM, PSAM, ARSAM, BSAM, USAM
+from ..optimizer import SAM, SAM_Faster, DNSAM, RDNSAM, DSAM, FDNSAM, HSAM, PSAM, ARSAM, BSAM, USAM, ADAMSAM, GDSAM, MSAM, SAMA
+import torch.optim as optim
 
-def get_optimizer(net, base_optimizer, cfg):
+def get_optimizer(net, cfg):
+    base_optimizer = optim.SGD
     if cfg['model']['name'] == 'sam':
         return SAM(
             net.parameters(), 
@@ -14,6 +16,51 @@ def get_optimizer(net, base_optimizer, cfg):
         )
     elif cfg['model']['name'] == 'usam':
         return USAM(
+            net.parameters(), 
+            base_optimizer, 
+            lr=cfg['model']['lr'], 
+            momentum=cfg['model']['momentum'], 
+            weight_decay=cfg['model']['weight_decay'],
+            rho=cfg['model']['rho'], 
+            adaptive=cfg['model']['adaptive'],
+            nesterov=cfg['model']['nesterov'],
+        )
+    elif cfg['model']['name'] == 'adamsam':
+        return ADAMSAM(
+            net.parameters(), 
+            base_optimizer, 
+            lr=cfg['model']['lr'], 
+            momentum=cfg['model']['momentum'], 
+            weight_decay=cfg['model']['weight_decay'],
+            betas=cfg['model']['betas'],
+            rho=cfg['model']['rho'], 
+            adaptive=cfg['model']['adaptive'],
+            nesterov=cfg['model']['nesterov'],
+        )
+    elif cfg['model']['name'] == 'gdsam':
+        return GDSAM(
+            net.parameters(), 
+            base_optimizer=base_optimizer, 
+            model=net,
+            lr=cfg['model']['lr'], 
+            momentum=cfg['model']['momentum'], 
+            weight_decay=cfg['model']['weight_decay'],
+            gdsam_alpha=cfg['model']['gdsam_alpha'],
+            rho=cfg['model']['rho'], 
+            adaptive=cfg['model']['adaptive'],
+            nesterov=cfg['model']['nesterov'],
+        )
+    elif cfg['model']['name'] == 'msam':
+        return MSAM(
+            net.parameters(), 
+            lr=cfg['model']['lr'], 
+            momentum=cfg['model']['momentum'], 
+            weight_decay=cfg['model']['weight_decay'],
+            rho=cfg['model']['rho'], 
+            nesterov=cfg['model']['nesterov'],
+        )
+    elif cfg['model']['name'] == 'sama':
+        return SAMA(
             net.parameters(), 
             base_optimizer, 
             lr=cfg['model']['lr'], 

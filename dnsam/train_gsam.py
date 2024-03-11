@@ -98,17 +98,57 @@ def train(epoch):
     total = 0
     for batch_idx, (inputs, targets) in enumerate(train_dataloader):
         inputs, targets = inputs.to(device), targets.to(device)
-        
+        """
         optimizer.zero_grad()
         enable_running_stats(net)  # <- this is the important line
         outputs = net(inputs)
         first_loss = criterion(outputs, targets)
         first_loss.backward()
-        optimizer.first_step(zero_grad=True)
+        optimizer.first_step(zero_grad=False)
         
+        # get ascent grads
+        first_grads = get_gradients(optimizer)
+        optimizer.zero_grad()
+
         disable_running_stats(net)  # <- this is the important line
         criterion(net(inputs), targets).backward()
-        optimizer.second_step(zero_grad=True)
+        optimizer.second_step(zero_grad=False)
+        
+        # get descent grads
+        second_grads = get_gradients(optimizer)
+        optimizer.zero_grad()
+        
+        # get cosine similarity
+        similarity = [cosine_similarity(grad1, grad2) for grad1, grad2 in zip(first_grads, second_grads)]
+        mean_similarity = np.mean(similarity)
+        
+        concat_first_grads = torch.cat([grad1.view(-1) for grad1 in first_grads], dim=0)
+        concat_second_grads = torch.cat([grad1.view(-1) for grad1 in second_grads], dim=0)
+        concat_similarity = cosine_similarity(concat_first_grads, concat_second_grads)
+        
+        grad_norm, scale = optimizer.get_log()
+        for group in optimizer.param_groups:
+            rho_value = group['rho']
+        
+        named_parameter = [n for n, _ in net.named_parameters()]
+        sim_dict = {}
+        for n, sim in zip(named_parameter, similarity):
+            sim_dict[f'sim/{n}'] = sim
+            
+        wandb.log({
+            'similarity': mean_similarity,
+            'concat_similarity': concat_similarity,
+            'rho_value': float(rho_value),
+            'grad_norm': grad_norm,
+            'scale': scale,
+            **sim_dict
+        })
+        
+        if 'adaptive' in name:
+            rho_scheduler.step(mean_similarity)
+        """
+        optimizer.set_closure(criterion, inputs, targets)
+        outputs, first_loss = optimizer.step()
         
         with torch.no_grad():
             train_loss += first_loss.item()
@@ -118,8 +158,8 @@ def train(epoch):
 
             train_loss_mean = train_loss/(batch_idx+1)
             acc = 100.*correct/total
-            # progress_bar(batch_idx, len(train_dataloader), 'Loss: %.3f | Acc: %.3f%% (%d/%d)'
-            #          % (train_loss_mean, acc, correct, total))
+            progress_bar(batch_idx, len(train_dataloader), 'Loss: %.3f | Acc: %.3f%% (%d/%d)'
+                     % (train_loss_mean, acc, correct, total))
         
     metrics['train/loss'] = train_loss_mean
     metrics['train/acc'] = acc

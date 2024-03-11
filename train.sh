@@ -1,3 +1,3 @@
-python dnsam/train_sam.py --experiment=cifar100_wrn28_10_sam_rho01_bs128_seed42
-python dnsam/train_sam.py --experiment=cifar100_wrn28_10_sam_warmup10_rho01_bs128_seed42
-python dnsam/train_sam.py --experiment=cifar100_resnet50_sam_rho005_bs128_seed42
+python dnsam/train_sam.py --experiment=cifar100_resnet18_asam_rho2_bs128_seed42
+python dnsam/train_sam.py --experiment=cifar100_resnet34_asam_rho2_bs128_seed42
+python dnsam/train_sam.py --experiment=cifar100_resnet50_asam_rho2_bs128_seed42

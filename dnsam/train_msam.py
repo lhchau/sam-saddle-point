@@ -96,31 +96,28 @@ def train(epoch):
     train_loss = 0
     correct = 0
     total = 0
+    
+    optimizer.move_up_to_momentumAscent()
     for batch_idx, (inputs, targets) in enumerate(train_dataloader):
         inputs, targets = inputs.to(device), targets.to(device)
-        
-        optimizer.zero_grad()
-        enable_running_stats(net)  # <- this is the important line
         outputs = net(inputs)
         first_loss = criterion(outputs, targets)
         first_loss.backward()
-        optimizer.first_step(zero_grad=True)
-        
-        disable_running_stats(net)  # <- this is the important line
-        criterion(net(inputs), targets).backward()
-        optimizer.second_step(zero_grad=True)
+        optimizer.step()
+        optimizer.zero_grad()
         
         with torch.no_grad():
             train_loss += first_loss.item()
             _, predicted = outputs.max(1)
             total += targets.size(0)
             correct += predicted.eq(targets).sum().item()
-
+            
             train_loss_mean = train_loss/(batch_idx+1)
             acc = 100.*correct/total
-            # progress_bar(batch_idx, len(train_dataloader), 'Loss: %.3f | Acc: %.3f%% (%d/%d)'
-            #          % (train_loss_mean, acc, correct, total))
-        
+            progress_bar(batch_idx, len(train_dataloader), 'Loss: %.3f | Acc: %.3f%% (%d/%d)'
+                     % (train_loss_mean, acc, correct, total))
+    optimizer.move_back_from_momentumAscent()
+    
     metrics['train/loss'] = train_loss_mean
     metrics['train/acc'] = acc
     metrics['epoch'] = epoch
