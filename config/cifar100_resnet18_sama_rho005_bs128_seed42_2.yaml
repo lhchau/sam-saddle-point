@@ -7,17 +7,18 @@ data:
   - 0.1
 model:
   adaptive: false
-  architecture: wrn28_10
+  architecture: resnet18
   lr: 0.1
-  momentum: 0.9
-  name: sam
+  momentum: 0.0
+  name: sama
   nesterov: false
-  rho: 0.4
+  rho: 0.05
   weight_decay: 0.001
+  betas: [0.95, 0.98]
 trainer:
   epochs: 200
   sch: cosine_annealing_lr
   seed: 42
 wandb:
-  name: wrn28_10_rho04_bs128_seed42
+  name: "{{ model.architecture }}_{{ model.name }}_rho{{ model.rho }}_momen{{ model.momentum }}_betas{{ model.betas | join('_') }}_bs128_seed42"
   project: SAM-Adaptive-Rho-CIFAR100

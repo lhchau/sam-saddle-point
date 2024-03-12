@@ -14,12 +14,12 @@ model:
   name: "hsam"
   lr: 0.1
   momentum: 0.9
-  weight_decay: 0.0005
-  rho: 0.001
-  hsam_beta: 0.95
+  weight_decay: 0.001
+  rho: 2
+  hsam_beta: 0.99
   adaptive: False
   nesterov: False
 
 wandb:
-  name: "resnet18_hsam_hrho003_rho0001_bs128_seed42"
-  project: "SAM-Saddle-Point-CIFAR100"
+  name: "resnet18_hsam_hrho200_beta2_099_rho2_bs128_seed42"
+  project: SAM-Adaptive-Rho-CIFAR100

@@ -17,7 +17,9 @@ model:
 trainer:
   epochs: 200
   sch: cosine_annealing_lr
-  seed: 42
+  seed: 43
+  threshold: 0.95
+  factor: 1.001
 wandb:
-  name: resnet18_adaptive_rho005_simple095_1005_bs128_seed42
+  name: resnet18_adaptive_rho005_simple095_11_bs128_seed43
   project: SAM-Adaptive-Rho-CIFAR100

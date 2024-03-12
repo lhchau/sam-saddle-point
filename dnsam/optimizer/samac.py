@@ -2,18 +2,18 @@ import torch
 import math
 
 
-class SAMA(torch.optim.Optimizer):
-    def __init__(self, params, base_optimizer, rho=0.05, adaptive=False, betas=(0.9, 0.95), **kwargs):
+class SAMAC(torch.optim.Optimizer):
+    def __init__(self, params, base_optimizer, rho=0.05, adaptive=False, beta=0.9, **kwargs):
         assert rho >= 0.0, f"Invalid rho, should be non-negative: {rho}"
 
         defaults = dict(rho=rho, adaptive=adaptive, **kwargs)
-        super(SAMA, self).__init__(params, defaults)
+        super(SAMAC, self).__init__(params, defaults)
 
         self.base_optimizer = base_optimizer(self.param_groups, **kwargs)
         self.param_groups = self.base_optimizer.param_groups
         self.defaults.update(self.base_optimizer.defaults)
         self.state['step'] = 0
-        self.beta1, self.beta2 = betas
+        self.beta = beta
 
     @torch.no_grad()
     def first_step(self, zero_grad=False):        
@@ -38,25 +38,20 @@ class SAMA(torch.optim.Optimizer):
                 if p.grad is None: continue
                 
                 self.state['step'] += 1
-                bias_correction1 = 1 - self.beta1 ** self.state['step']
-                bias_correction2 = 1 - self.beta2 ** self.state['step']
+                bias_correction = 1 - self.beta ** self.state['step']
 
-                if 'exp_avg' not in self.state[p].keys():
-                    self.state[p]['exp_avg'] = p.grad.data.clone()
-                else:
-                    self.state[p]['exp_avg'].mul_(self.beta1).add_(p.grad, alpha=1-self.beta1)
-                numer = self.state[p]['exp_avg'] / math.sqrt(bias_correction1)
-
-                estimated_hess = (self.state[p]["old_g"] - p.grad) / (self.state[p]["old_p"] - p.data + 1e-12)
+                delta = (self.state[p]["old_g"] - p.grad + 1e-12)
+                estimated_hess = delta.mul_(delta)
                 if 'hess' not in self.state[p].keys():
                     self.state[p]['hess'] = estimated_hess.data.clone()
                 else:
-                    self.state[p]['hess'].mul_(self.beta2).add_(estimated_hess, alpha=1-self.beta2)
-                denom = self.state[p]['hess'].abs().add_(1e-12).sqrt() / math.sqrt(bias_correction2)
-                
+                    self.state[p]['hess'].mul_(self.beta).add_(estimated_hess, alpha=1-self.beta)
+                denom = self.state[p]['hess'].add_(1e-12).sqrt() / math.sqrt(bias_correction)
+
                 p.data = self.state[p]["old_p"]  # get back to "w" from "w + e(w)"
                 
-                p.grad = numer.div_(denom)
+                p.grad.div_(denom)
+                p.grad = p.grad.clamp(None, 1)
 
         self.base_optimizer.step()  # do the actual "sharpness-aware" update
 

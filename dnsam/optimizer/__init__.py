@@ -13,3 +13,4 @@ from .adamsam import ADAMSAM
 from .gdsam import GDSAM
 from .msam import MSAM
 from .sama import SAMA
+from .samac import SAMAC

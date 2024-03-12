@@ -20,4 +20,4 @@ trainer:
   seed: 42
 wandb:
   name: wrn28_10_rho04_bs128_seed42
-  project: SAM-Thesis-CIFAR100
+  project: SAM-Adaptive-Rho-CIFAR100

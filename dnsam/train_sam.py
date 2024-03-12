@@ -46,6 +46,8 @@ wandb.define_metric("train/*", step_metric="epoch")
 wandb.define_metric("val/*", step_metric="epoch")
 metrics = {}
 
+LOGGING = True
+
 pprint.pprint(cfg)
 # Data
 data_name = cfg['data']['name']
@@ -80,15 +82,6 @@ print(f"==> Loading scheduler: {sch}")
 optimizer = get_optimizer(net, cfg)
 scheduler = get_scheduler(optimizer, cfg)
 
-warmup_flag = cfg['trainer'].get('warmup', None)
-if warmup_flag is not None:
-    if 'cosine' in name:
-        rho_scheduler = RhoCosineScheduler(optimizer, cfg['model']['rho'], warmup_epochs=cfg['trainer']['warmup'], total_epochs=EPOCHS)
-    else:
-        rho_scheduler = RhoScheduler(optimizer, cfg['model']['rho'], warmup_epochs=cfg['trainer']['warmup'], total_epochs=EPOCHS)
-    rho_scheduler.step(-1)
-elif 'adaptive' in name:
-    rho_scheduler = RhoSimilarityScheduler(optimizer, cfg['trainer']['threshold'], cfg['trainer']['factor'])
 # Training
 def train(epoch):
     print('\nEpoch: %d' % epoch)
@@ -118,8 +111,8 @@ def train(epoch):
 
             train_loss_mean = train_loss/(batch_idx+1)
             acc = 100.*correct/total
-            # progress_bar(batch_idx, len(train_dataloader), 'Loss: %.3f | Acc: %.3f%% (%d/%d)'
-            #          % (train_loss_mean, acc, correct, total))
+            progress_bar(batch_idx, len(train_dataloader), 'Loss: %.3f | Acc: %.3f%% (%d/%d)'
+                    % (train_loss_mean, acc, correct, total))
         
     metrics['train/loss'] = train_loss_mean
     metrics['train/acc'] = acc
@@ -145,9 +138,8 @@ def val(epoch):
             val_loss_mean = val_loss/(batch_idx+1)
             acc = 100.*correct/total
             progress_bar(batch_idx, len(val_dataloader), 'Loss: %.3f | Acc: %.3f%% (%d/%d)'
-                         % (val_loss_mean, acc, correct, total))
+                        % (val_loss_mean, acc, correct, total))
         
-    
     # Save checkpoint.
     if acc > best_acc:
         print('Saving..')
@@ -161,17 +153,6 @@ def val(epoch):
             os.mkdir(f'checkpoint/{data_name}_{name}_{current_time}')
         torch.save(state, f'./checkpoint/{data_name}_{name}_{current_time}/ckpt_best.pth')
         best_acc = acc
-    # if (epoch+1) % 20 == 0:
-    #     print(f'Saving epoch {epoch+1}..')
-    #     state = {
-    #         'net': net.state_dict(),
-    #         'acc': acc,
-    #         'loss': val_loss,
-    #         'epoch': epoch
-    #     }
-    #     if not os.path.isdir(f'checkpoint/{data_name}_{name}_{current_time}'):
-    #         os.mkdir(f'checkpoint/{data_name}_{name}_{current_time}')
-    #     torch.save(state, f'./checkpoint/{data_name}_{name}_{current_time}/{epoch+1}.pth')
     
     metrics['val/loss'] = val_loss_mean
     metrics['val/acc'] = acc
@@ -197,9 +178,8 @@ def test():
             _, predicted = outputs.max(1)
             total += targets.size(0)
             correct += predicted.eq(targets).sum().item()
-
             progress_bar(batch_idx, len(test_dataloader), 'Loss: %.3f | Acc: %.3f%% (%d/%d)'
-                         % (test_loss/(batch_idx+1), 100.*correct/total, correct, total))
+                        % (test_loss/(batch_idx+1), 100.*correct/total, correct, total))
 
     wandb.log({
         'test/loss': test_loss/(len(test_dataloader)+1),
@@ -212,8 +192,6 @@ if __name__ == "__main__":
         val(epoch)
         wandb.log(metrics)
         scheduler.step()
-        if warmup_flag is not None:
-            rho_scheduler.step(epoch)
     test()
     
         

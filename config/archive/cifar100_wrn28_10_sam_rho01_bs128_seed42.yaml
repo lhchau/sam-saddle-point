@@ -20,4 +20,4 @@ trainer:
   seed: 42
 wandb:
   name: wrn28_10_rho01_bs128_seed42
-  project: SAM-ECCV-CIFAR100
+  project: SAM-Adaptive-Rho-CIFAR100

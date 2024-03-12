@@ -1,4 +1,4 @@
-from ..optimizer import SAM, SAM_Faster, DNSAM, RDNSAM, DSAM, FDNSAM, HSAM, PSAM, ARSAM, BSAM, USAM, ADAMSAM, GDSAM, MSAM, SAMA
+from ..optimizer import SAM, SAM_Faster, DNSAM, RDNSAM, DSAM, FDNSAM, HSAM, PSAM, ARSAM, BSAM, USAM, ADAMSAM, GDSAM, MSAM, SAMA, SAMAC
 import torch.optim as optim
 
 def get_optimizer(net, cfg):
@@ -61,6 +61,18 @@ def get_optimizer(net, cfg):
         )
     elif cfg['model']['name'] == 'sama':
         return SAMA(
+            net.parameters(), 
+            base_optimizer, 
+            lr=cfg['model']['lr'], 
+            momentum=cfg['model']['momentum'], 
+            weight_decay=cfg['model']['weight_decay'],
+            rho=cfg['model']['rho'], 
+            adaptive=cfg['model']['adaptive'],
+            nesterov=cfg['model']['nesterov'],
+            betas=cfg['model']['betas'],
+        )
+    elif cfg['model']['name'] == 'samac':
+        return SAMAC(
             net.parameters(), 
             base_optimizer, 
             lr=cfg['model']['lr'], 
