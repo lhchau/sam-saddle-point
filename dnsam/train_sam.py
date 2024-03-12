@@ -10,6 +10,7 @@ import os
 import argparse
 import wandb
 import yaml
+import dynamic_yaml
 import pprint
 
 from dnsam.models import *
@@ -25,7 +26,7 @@ args = parser.parse_args()
 
 yaml_filepath = os.path.join(".", "config", f"{args.experiment}.yaml")
 with open(yaml_filepath, "r") as yamlfile:
-    cfg = yaml.load(yamlfile, Loader=yaml.FullLoader)
+    cfg = dynamic_yaml.load(yamlfile)
     print("==> Read YAML config file successfully ...")
 seed = cfg['trainer'].get('seed', 42)
 initialize(seed)
