@@ -48,6 +48,7 @@ class SAM(torch.optim.Optimizer):
         closure()
         self.second_step()
 
+    @torch.no_grad()
     def _grad_norm(self):
         shared_device = self.param_groups[0]["params"][0].device  # put everything on the same device, in case of model parallelism
         norm = torch.norm(
@@ -59,17 +60,6 @@ class SAM(torch.optim.Optimizer):
                     p=2
                )
         return norm
-    
-    def get_weight_norm(self):
-        total_norm = 0
-        for group in self.param_groups:
-            for p in group["params"]:
-                if p.grad is not None:
-                    total_norm += torch.norm(p, p=2).item() ** 2
-        return total_norm ** 0.5
-    
-    def get_log(self):
-        return self.grad_norm, self.scale
     
     def load_state_dict(self, state_dict):
         super().load_state_dict(state_dict)

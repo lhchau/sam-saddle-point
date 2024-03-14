@@ -10,7 +10,7 @@ model:
   architecture: resnet18
   lr: 0.1
   momentum: 0.9
-  name: sam_explore
+  name: sam
   nesterov: false
   rho: 1
   weight_decay: 0.001
