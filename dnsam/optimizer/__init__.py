@@ -10,6 +10,7 @@ from .sama import SAMA
 from .samac import SAMAC
 from .sama_lbgfs import SAMA_LBGFS
 from .samaf import SAMAF
+from .samaccer import SAMACCER
 
 
 def get_optimizer(net, cfg):
@@ -131,6 +132,18 @@ def get_optimizer(net, cfg):
             rho=cfg['model']['rho'], 
             adaptive=cfg['model']['adaptive'],
             nesterov=cfg['model']['nesterov']
+        )
+    elif cfg['model']['name'] == 'samaccer':
+        return SAMACCER(
+            net.parameters(), 
+            base_optimizer, 
+            lr=cfg['model']['lr'], 
+            momentum=cfg['model']['momentum'], 
+            weight_decay=cfg['model']['weight_decay'],
+            rho=cfg['model']['rho'], 
+            adaptive=cfg['model']['adaptive'],
+            nesterov=cfg['model']['nesterov'],
+            betas=cfg['model']['betas'],
         )
     else:
         raise ValueError("Invalid optimizer!!!")
