@@ -114,6 +114,14 @@ def get_gradients(optimizer):
             grads.append(p.grad.clone())
     return grads
 
+def get_gradients_sign(optimizer):
+    grads = []
+    for group in optimizer.param_groups:
+        for p in group["params"]:
+            if p.grad is None: continue
+            grads.append(p.grad.sign().clone())
+    return grads
+
 def initialize(seed: int):
     random.seed(seed)
     torch.manual_seed(seed)

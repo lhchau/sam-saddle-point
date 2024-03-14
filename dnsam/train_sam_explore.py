@@ -48,6 +48,7 @@ wandb.define_metric("train/*", step_metric="epoch")
 wandb.define_metric("val/*", step_metric="epoch")
 metrics = {}
 
+old_sam_grads, old_sgd_grads = None, None
 ################################
 #### 1. BUILD THE DATASET
 ################################
@@ -97,11 +98,26 @@ def train(epoch):
         outputs = net(inputs)
         first_loss = criterion(outputs, targets)
         first_loss.backward()
-        optimizer.first_step(zero_grad=True)
+        optimizer.first_step(zero_grad=False)
         
+        sgd_grads = get_gradients_sign(optimizer)
+        optimizer.zero_grad()
+
         disable_running_stats(net)  # <- this is the important line
         criterion(net(inputs), targets).backward()
-        optimizer.second_step(zero_grad=True)
+        optimizer.second_step(zero_grad=False)
+        
+        sam_grads = get_gradients_sign(optimizer)
+        optimizer.zero_grad()
+        
+        global old_sgd_grads, old_sam_grads
+        if old_sgd_grads is None: 
+            old_sgd_grads, old_sam_grads = sgd_grads, sam_grads
+        else:
+            sim1 = np.mean([cosine_similarity(grad1, grad2) for grad1, grad2 in zip(old_sgd_grads, sgd_grads)])
+            sim2 = np.mean([cosine_similarity(grad1, grad2) for grad1, grad2 in zip(old_sam_grads, sam_grads)])
+            old_sgd_grads, old_sam_grads = sgd_grads, sam_grads
+            wandb.log({'sim_grad_sgd': sim1, 'sim_grad_sam': sim2})
         
         with torch.no_grad():
             train_loss += first_loss.item()
@@ -193,3 +209,6 @@ if __name__ == "__main__":
         wandb.log(metrics)
         scheduler.step()
     test()
+    
+        
+
