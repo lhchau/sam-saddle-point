@@ -114,8 +114,8 @@ def train(epoch):
         if old_sgd_grads is None: 
             old_sgd_grads, old_sam_grads = sgd_grads, sam_grads
         else:
-            dis1 = get_grad_norm([grad.sub(old_grad) for grad, old_grad in zip(sgd_grads, old_sgd_grads)])
-            dis2 = get_grad_norm([grad.sub(old_grad) for grad, old_grad in zip(sam_grads, old_sam_grads)])
+            dis1 = get_grad_norm([grad - old_grad for grad, old_grad in zip(sgd_grads, old_sgd_grads)])
+            dis2 = get_grad_norm([grad - old_grad for grad, old_grad in zip(sam_grads, old_sam_grads)])
             wandb.log({'norm_dis_sgd': dis1, 'norm_dis_sam': dis2})
         
         with torch.no_grad():

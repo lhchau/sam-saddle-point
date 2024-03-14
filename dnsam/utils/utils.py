@@ -125,9 +125,8 @@ def get_gradients_sign(optimizer):
 def get_grad_norm(grads):
     norm = torch.norm(
                 torch.stack([
-                    p.grad.norm(p=2)
-                    for p in grads
-                    if p.grad is not None
+                    grad.norm(p=2)
+                    for grad in grads
                 ]),
                 p=2
             )
