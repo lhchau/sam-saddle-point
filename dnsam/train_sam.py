@@ -9,7 +9,6 @@ import datetime
 import os
 import argparse
 import wandb
-import yaml
 import dynamic_yaml
 import pprint
 
@@ -17,9 +16,13 @@ from dnsam.models import *
 from dnsam.utils import *
 from dnsam.data import *
 from dnsam.scheduler import *
+from dnsam.optimizer import *
 
 current_time = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
 
+################################
+#### 0. SETUP CONFIGURATION
+################################
 parser = argparse.ArgumentParser(description='PyTorch CIFAR10 Training')
 parser.add_argument('--experiment', default='example', type=str, help='path to YAML config file')
 args = parser.parse_args()
@@ -37,20 +40,17 @@ start_epoch = 0  # start from epoch 0 or last checkpoint epoch
 
 EPOCHS = cfg['trainer']['epochs'] 
 
-name = cfg['wandb']['name']
-# Initialize Wandb
 print('==> Initialize wandb..')
+name = cfg['wandb']['name']
 wandb.init(project=cfg['wandb']['project'], name=cfg['wandb']['name'])
-# define custom x axis metric
 wandb.define_metric("epoch")
 wandb.define_metric("train/*", step_metric="epoch")
 wandb.define_metric("val/*", step_metric="epoch")
 metrics = {}
 
-LOGGING = True
-
-pprint.pprint(cfg)
-# Data
+################################
+#### 1. BUILD THE DATASET
+################################
 data_name = cfg['data']['name']
 data_dict = get_dataloader(
     dataset=cfg['data']['name'],
@@ -58,13 +58,11 @@ data_dict = get_dataloader(
     num_workers=cfg['data']['num_workers'], 
     split=cfg['data']['split']
     )
+train_dataloader, val_dataloader, test_dataloader, num_classes = data_dict['train_dataloader'], data_dict['val_dataloader'], data_dict['test_dataloader'], data_dict['num_classes']
 
-print(f"==> Loading dataset: {data_name}")
-train_dataloader, val_dataloader, test_dataloader, num_classes = data_dict['train_dataloader'], data_dict['val_dataloader'], \
-    data_dict['test_dataloader'], data_dict['num_classes']
-
-# Model
-print(f'==> Loading model: {cfg["model"]["architecture"]}')
+################################
+#### 2. BUILD THE NEURAL NETWORK
+################################
 net = get_model(cfg, num_classes=num_classes)
 net = net.to(device)
 if device == 'cuda':
@@ -74,16 +72,17 @@ if device == 'cuda':
 total_params = sum(p.numel() for p in net.parameters())
 print(f'==> Number of parameters in {cfg["model"]["architecture"]}: {total_params}')
 
+################################
+#### 3.a OPTIMIZING MODEL PARAMETERS
+################################
 criterion = nn.CrossEntropyLoss()
-
 sch = cfg['trainer'].get('sch', None)
-print(f"==> Loading optimizer: {cfg['model']['name']}")
-print(f"==> Loading scheduler: {sch}")
-
 optimizer = get_optimizer(net, cfg)
 scheduler = get_scheduler(optimizer, cfg)
 
-# Training
+################################
+#### 3.b Training 
+################################
 def train(epoch):
     print('\nEpoch: %d' % epoch)
     net.train()
@@ -103,6 +102,9 @@ def train(epoch):
         disable_running_stats(net)  # <- this is the important line
         criterion(net(inputs), targets).backward()
         optimizer.second_step(zero_grad=True)
+        
+        sim1, sim2 = optimizer.get_sim()
+        wandb.log({'sim_grad_sgd': sim1, 'sim_grad_sam': sim2})
         
         with torch.no_grad():
             train_loss += first_loss.item()

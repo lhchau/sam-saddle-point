@@ -56,7 +56,7 @@ class SAMA(torch.optim.Optimizer):
                 
                 p.data = self.state[p]["old_p"]  # get back to "w" from "w + e(w)"
                 
-                p.grad = numer.div_(denom)
+                p.grad = (numer.div_(denom)).clamp(-1, 1)
 
         self.base_optimizer.step()  # do the actual "sharpness-aware" update
 
@@ -71,6 +71,7 @@ class SAMA(torch.optim.Optimizer):
         closure()
         self.second_step()
 
+    @torch.no_grad()
     def _grad_norm(self):
         shared_device = self.param_groups[0]["params"][0].device  # put everything on the same device, in case of model parallelism
         norm = torch.norm(
@@ -82,6 +83,9 @@ class SAMA(torch.optim.Optimizer):
                     p=2
                )
         return norm
+    
+    def set_beta(self, betas):
+        self.beta1, self.beta2 = betas
     
     def load_state_dict(self, state_dict):
         super().load_state_dict(state_dict)

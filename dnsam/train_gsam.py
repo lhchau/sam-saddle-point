@@ -16,6 +16,7 @@ from dnsam.models import *
 from dnsam.utils import *
 from dnsam.data import *
 from dnsam.scheduler import *
+from dnsam.optimizer import *
 
 current_time = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
 
