@@ -8,7 +8,7 @@ data:
 model:
   adaptive: false
   architecture: resnet18
-  lr: 0.001
+  lr: 0.1
   momentum: 0.0
   name: samaccer
   nesterov: false
@@ -17,8 +17,9 @@ model:
   betas: [0.9, 0.9]
 trainer:
   epochs: 200
-  sch: cosine_annealing_lr
+  sch: linear_warmup_cosine_annealing_lr
   seed: 42
+  warmup: 40
 wandb:
-  name: "{model.architecture}_{model.name}_rho{model.rho}_momen{model.momentum}_betas{model.betas[0]}_{model.betas[1]}_{data.batch_size}_seed{trainer.seed}"
+  name: "{model.architecture}_{model.name}_rho{model.rho}_lrwarmup01_momen{model.momentum}_betas{model.betas[0]}_{model.betas[1]}_{data.batch_size}_seed{trainer.seed}"
   project: SAM-Adaptive-Rho-CIFAR100

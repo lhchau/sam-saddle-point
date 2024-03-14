@@ -2,12 +2,12 @@ import torch
 import math
 
 
-class SAMACCER(torch.optim.Optimizer):
+class SAMDAWM(torch.optim.Optimizer):
     def __init__(self, params, base_optimizer, rho=0.05, adaptive=False, betas=(0.9, 0.95), **kwargs):
         assert rho >= 0.0, f"Invalid rho, should be non-negative: {rho}"
 
         defaults = dict(rho=rho, adaptive=adaptive, **kwargs)
-        super(SAMACCER, self).__init__(params, defaults)
+        super(SAMDAWM, self).__init__(params, defaults)
 
         self.base_optimizer = base_optimizer(self.param_groups, **kwargs)
         self.param_groups = self.base_optimizer.param_groups
@@ -41,18 +41,27 @@ class SAMACCER(torch.optim.Optimizer):
                 bias_correction1 = 1 - self.beta1 ** self.state['step']
                 bias_correction2 = 1 - self.beta2 ** self.state['step']
 
-                if 'exp_avg' not in self.state[p].keys():
-                    self.state[p]['exp_avg'] = p.grad.data.clone()
-                else:
-                    self.state[p]['exp_avg'].mul_(self.beta1).add_(p.grad, alpha=1-self.beta1).add_(1e-12)
-                numer = self.state[p]['exp_avg'] / math.sqrt(bias_correction1)
-
                 delta_sq = (self.state[p]["old_g"] - p.grad) * (self.state[p]["old_g"] - p.grad)
-                if 'hess' not in self.state[p].keys():
-                    self.state[p]['vt'] = delta_sq.data.clone()
+                # if 'hess' not in self.state[p].keys():
+                #     self.state[p]['vt'] = delta_sq.data.clone()
+                # else:
+                #     self.state[p]['vt'].mul_(self.beta2).add_(delta_sq, alpha=1-self.beta2)
+                # denom = (self.state[p]['vt'].sqrt() / math.sqrt(bias_correction2)).add(1e-12)
+                
+                buf = (p.grad.div(delta_sq.sqrt().add(1e-12))).clamp(-1, 1)
+                if 'exp_avg' not in self.state[p].keys():
+                    self.state[p]['exp_avg'] = buf
                 else:
-                    self.state[p]['vt'].mul_(self.beta2).add_(delta_sq, alpha=1-self.beta2)
+                    self.state[p]['exp_avg'].mul_(self.beta1).add_(buf, alpha=1-self.beta1).add_(1e-12)
+                numer = self.state[p]['exp_avg'] / math.sqrt(bias_correction1)
+                
+                grad_sq = p.grad.mul(p.grad.conj())
+                if 'vt' not in self.state[p].keys():
+                    self.state[p]['vt'] = grad_sq.data.clone()
+                else:
+                    self.state[p]['vt'].mul_(self.beta2).add_(grad_sq, alpha=1-self.beta2)
                 denom = (self.state[p]['vt'].sqrt() / math.sqrt(bias_correction2)).add(1e-12)
+                
                 
                 p.data = self.state[p]["old_p"]  # get back to "w" from "w + e(w)"
                 

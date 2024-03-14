@@ -1,7 +1,7 @@
 import math
-from torch.optim.lr_scheduler import _LRScheduler
+from torch.optim.lr_scheduler import LRScheduler
 
-class LinearWarmupCosineAnnealingLR(_LRScheduler):
+class LinearWarmupCosineAnnealingLR(LRScheduler):
     def __init__(self, optimizer, warmup_epochs, max_epochs, eta_min=0, last_epoch=-1):
         self.warmup_epochs = warmup_epochs
         self.max_epochs = max_epochs

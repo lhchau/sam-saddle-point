@@ -10,7 +10,7 @@ model:
   architecture: resnet18
   lr: 0.001
   momentum: 0.0
-  name: samaccer
+  name: samawm
   nesterov: false
   rho: 0.05
   weight_decay: 0.001

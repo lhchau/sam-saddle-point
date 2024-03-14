@@ -190,6 +190,8 @@ if __name__ == "__main__":
     for epoch in range(start_epoch, start_epoch+EPOCHS):
         train(epoch)
         val(epoch)
+        
+        metrics['learning_rate'] = scheduler.get_last_lr()[-1]
         wandb.log(metrics)
         scheduler.step()
     test()

@@ -8,9 +8,9 @@ data:
 model:
   adaptive: false
   architecture: resnet18
-  lr: 0.001
+  lr: 0.1
   momentum: 0.0
-  name: samaccer
+  name: samdawm
   nesterov: false
   rho: 0.05
   weight_decay: 0.001

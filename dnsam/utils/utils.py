@@ -122,6 +122,17 @@ def get_gradients_sign(optimizer):
             grads.append(p.grad.sign().clone())
     return grads
 
+def get_grad_norm(grads):
+    norm = torch.norm(
+                torch.stack([
+                    p.grad.norm(p=2)
+                    for p in grads
+                    if p.grad is not None
+                ]),
+                p=2
+            )
+    return norm
+    
 def initialize(seed: int):
     random.seed(seed)
     torch.manual_seed(seed)

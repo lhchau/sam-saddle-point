@@ -100,24 +100,23 @@ def train(epoch):
         first_loss.backward()
         optimizer.first_step(zero_grad=False)
         
-        sgd_grads = get_gradients_sign(optimizer)
+        sgd_grads = get_gradients(optimizer)
         optimizer.zero_grad()
 
         disable_running_stats(net)  # <- this is the important line
         criterion(net(inputs), targets).backward()
         optimizer.second_step(zero_grad=False)
         
-        sam_grads = get_gradients_sign(optimizer)
+        sam_grads = get_gradients(optimizer)
         optimizer.zero_grad()
         
         global old_sgd_grads, old_sam_grads
         if old_sgd_grads is None: 
             old_sgd_grads, old_sam_grads = sgd_grads, sam_grads
         else:
-            sim1 = np.mean([cosine_similarity(grad1, grad2) for grad1, grad2 in zip(old_sgd_grads, sgd_grads)])
-            sim2 = np.mean([cosine_similarity(grad1, grad2) for grad1, grad2 in zip(old_sam_grads, sam_grads)])
-            old_sgd_grads, old_sam_grads = sgd_grads, sam_grads
-            wandb.log({'sim_grad_sgd': sim1, 'sim_grad_sam': sim2})
+            dis1 = get_grad_norm([grad.sub(old_grad) for grad, old_grad in zip(sgd_grads, old_sgd_grads)])
+            dis2 = get_grad_norm([grad.sub(old_grad) for grad, old_grad in zip(sam_grads, old_sam_grads)])
+            wandb.log({'norm_dis_sgd': dis1, 'norm_dis_sam': dis2})
         
         with torch.no_grad():
             train_loss += first_loss.item()
