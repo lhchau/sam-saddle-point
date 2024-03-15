@@ -116,7 +116,8 @@ def train(epoch):
         else:
             dis1 = get_grad_norm([grad - old_grad for grad, old_grad in zip(sgd_grads, old_sgd_grads)])
             dis2 = get_grad_norm([grad - old_grad for grad, old_grad in zip(sam_grads, old_sam_grads)])
-            wandb.log({'norm_dis_sgd': dis1, 'norm_dis_sam': dis2})
+            dis3 = get_grad_norm([grad - old_grad for grad, old_grad in zip(sam_grads, sgd_grads)])
+            wandb.log({'norm_dis_sgd': dis1, 'norm_dis_sam': dis2, 'norm_accelerate': dis3})
         
         with torch.no_grad():
             train_loss += first_loss.item()

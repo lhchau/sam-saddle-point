@@ -48,7 +48,7 @@ class SAMACCER(torch.optim.Optimizer):
                 numer = self.state[p]['exp_avg'] / math.sqrt(bias_correction1)
 
                 delta_sq = (self.state[p]["old_g"] - p.grad) * (self.state[p]["old_g"] - p.grad)
-                if 'hess' not in self.state[p].keys():
+                if 'vt' not in self.state[p].keys():
                     self.state[p]['vt'] = delta_sq.data.clone()
                 else:
                     self.state[p]['vt'].mul_(self.beta2).add_(delta_sq, alpha=1-self.beta2)

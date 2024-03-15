@@ -20,5 +20,5 @@ trainer:
   sch: cosine_annealing_lr
   seed: 42
 wandb:
-  name: "{model.architecture}_{model.name}_rho{model.rho}_momen{model.momentum}_betas{model.betas[0]}_{model.betas[1]}_{data.batch_size}_seed{trainer.seed}"
+  name: "{model.architecture}_{model.name}_rho{model.rho}_lr0001_momen{model.momentum}_betas{model.betas[0]}_{model.betas[1]}_{data.batch_size}_seed{trainer.seed}"
   project: SAM-Adaptive-Rho-CIFAR100
