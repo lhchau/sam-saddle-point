@@ -9,7 +9,8 @@ for beta in betas:
     with open(f'./config/{name}.yaml', 'r') as file:
         config = yaml.safe_load(file)
     config['model']['betas'] = beta
-    name = name.replace('0909', str(beta[0]).replace('.', '') + str(beta[1]).replace('.', ''))
+    config['model']['rho'] = 0.2
+    name = name.replace('0909', str(beta[0]).replace('.', '') + str(beta[1]).replace('.', '')).replace('rho005', 'rho02')
     # Save updated content to a new file
     with open(f'./config/{name}.yaml', 'w') as file:
         yaml.dump(config, file, default_flow_style=False)
