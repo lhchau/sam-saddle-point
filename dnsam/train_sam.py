@@ -103,6 +103,10 @@ def train(epoch):
         criterion(net(inputs), targets).backward()
         optimizer.second_step(zero_grad=True)
         
+        wandb.log({
+            'step_norm_before_hess': optimizer.step_norm_before_hess,
+            'step_norm': optimizer.step_norm,
+        })
         with torch.no_grad():
             train_loss += first_loss.item()
             _, predicted = outputs.max(1)

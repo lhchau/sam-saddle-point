@@ -33,6 +33,7 @@ class SAMA(torch.optim.Optimizer):
 
     @torch.no_grad()
     def second_step(self, zero_grad=False):
+        self.step_norm_before_hess = self._grad_norm()
         for group in self.param_groups:
             for p in group["params"]:
                 if p.grad is None: continue
@@ -57,7 +58,11 @@ class SAMA(torch.optim.Optimizer):
                 p.data = self.state[p]["old_p"]  # get back to "w" from "w + e(w)"
                 
                 p.grad = (numer.div_(denom)).clamp(-1, 1)
-
+        self.step_norm = self._grad_norm()
+        for group in self.param_groups:
+            for p in group["params"]:
+                p.grad.mul_(math.sqrt(self.step_norm_before_hess/self.step_norm))
+        
         self.base_optimizer.step()  # do the actual "sharpness-aware" update
 
         if zero_grad: self.zero_grad()
@@ -77,6 +82,18 @@ class SAMA(torch.optim.Optimizer):
         norm = torch.norm(
                     torch.stack([
                         ((torch.abs(p) if group["adaptive"] else 1.0) * p.grad).norm(p=2).to(shared_device)
+                        for group in self.param_groups for p in group["params"]
+                        if p.grad is not None
+                    ]),
+                    p=2
+               )
+        return norm
+    
+    def get_hessian_norm(self):
+        shared_device = self.param_groups[0]["params"][0].device  # put everything on the same device, in case of model parallelism
+        norm = torch.norm(
+                    torch.stack([
+                        self.state[p]['hess'].norm(p=2).to(shared_device)
                         for group in self.param_groups for p in group["params"]
                         if p.grad is not None
                     ]),
