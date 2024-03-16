@@ -12,7 +12,7 @@ class SAMACCER(torch.optim.Optimizer):
         self.base_optimizer = base_optimizer(self.param_groups, **kwargs)
         self.param_groups = self.base_optimizer.param_groups
         self.defaults.update(self.base_optimizer.defaults)
-        self.state['step'] = 0
+        self.state['step'] = torch.tensor(0.)
         self.beta1, self.beta2 = betas
 
     @torch.no_grad()
@@ -42,17 +42,16 @@ class SAMACCER(torch.optim.Optimizer):
                 bias_correction2 = 1 - self.beta2 ** self.state['step']
 
                 if 'exp_avg' not in self.state[p].keys():
-                    self.state[p]['exp_avg'] = p.grad.data.clone()
-                else:
-                    self.state[p]['exp_avg'].mul_(self.beta1).add_(p.grad, alpha=1-self.beta1).add_(1e-12)
-                numer = self.state[p]['exp_avg'] / math.sqrt(bias_correction1)
-
-                delta_sq = (self.state[p]["old_g"] - p.grad) * (self.state[p]["old_g"] - p.grad)
+                    self.state[p]['exp_avg'] = torch.zeros_like(p, memory_format=torch.preserve_format)
                 if 'vt' not in self.state[p].keys():
-                    self.state[p]['vt'] = delta_sq.data.clone()
-                else:
-                    self.state[p]['vt'].mul_(self.beta2).add_(delta_sq, alpha=1-self.beta2)
-                denom = (self.state[p]['vt'].sqrt() / math.sqrt(bias_correction2)).add(1e-12)
+                    self.state[p]['vt'] = torch.zeros_like(p, memory_format=torch.preserve_format)
+                    
+                delta = self.state[p]["old_g"].sub(p.grad)
+                self.state[p]['exp_avg'].lerp_(p.grad, 1 - self.beta1)
+                self.state[p]['vt'].mul_(self.beta2).addcmul_(delta, delta.conj(), value=1 - self.beta2)
+
+                numer = self.state[p]['exp_avg'] / bias_correction1
+                denom = (self.state[p]['vt'].sqrt() / math.sqrt(bias_correction2)).add_(1e-12)
                 
                 p.data = self.state[p]["old_p"]  # get back to "w" from "w + e(w)"
                 

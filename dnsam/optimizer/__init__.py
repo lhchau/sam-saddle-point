@@ -7,13 +7,13 @@ from .adamsam import ADAMSAM
 from .gdsam import GDSAM
 from .msam import MSAM
 from .sama import SAMA
-from .samac import SAMAC
 from .sama_lbgfs import SAMA_LBGFS
 from .samaf import SAMAF
 from .samaccer import SAMACCER
 from .samawm import SAMAWM
-from .samdawm import SAMDAWM
 from .samafam import SAMAFAM
+from .sambelief import SAMBelief
+from .samba import SAMBA
 
 
 def get_optimizer(net, cfg):
@@ -126,17 +126,6 @@ def get_optimizer(net, cfg):
             nesterov=cfg['model']['nesterov'],
             betas=cfg['model']['betas'],
         )
-    elif cfg['model']['name'] == 'samac':
-        return SAMAC(
-            net.parameters(), 
-            base_optimizer, 
-            lr=cfg['model']['lr'], 
-            momentum=cfg['model']['momentum'], 
-            weight_decay=cfg['model']['weight_decay'],
-            rho=cfg['model']['rho'], 
-            adaptive=cfg['model']['adaptive'],
-            nesterov=cfg['model']['nesterov'],
-        )
     elif cfg['model']['name'] == 'sam_faster':
         return SAM_Faster(
             net.parameters(), 
@@ -172,8 +161,20 @@ def get_optimizer(net, cfg):
             nesterov=cfg['model']['nesterov'],
             betas=cfg['model']['betas'],
         )
-    elif cfg['model']['name'] == 'samdawm':
-        return SAMDAWM(
+    elif cfg['model']['name'] == 'sambelief':
+        return SAMBelief(
+            net.parameters(), 
+            base_optimizer, 
+            lr=cfg['model']['lr'], 
+            momentum=cfg['model']['momentum'], 
+            weight_decay=cfg['model']['weight_decay'],
+            rho=cfg['model']['rho'], 
+            adaptive=cfg['model']['adaptive'],
+            nesterov=cfg['model']['nesterov'],
+            betas=cfg['model']['betas'],
+        )
+    elif cfg['model']['name'] == 'samba':
+        return SAMBA(
             net.parameters(), 
             base_optimizer, 
             lr=cfg['model']['lr'], 

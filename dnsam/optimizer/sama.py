@@ -42,17 +42,17 @@ class SAMA(torch.optim.Optimizer):
                 bias_correction2 = 1 - self.beta2 ** self.state['step']
 
                 if 'exp_avg' not in self.state[p].keys():
-                    self.state[p]['exp_avg'] = p.grad.data.clone()
-                else:
-                    self.state[p]['exp_avg'].mul_(self.beta1).add_(p.grad, alpha=1-self.beta1)
-                numer = self.state[p]['exp_avg'] / math.sqrt(bias_correction1)
-
-                estimated_hess = (self.state[p]["old_g"] - p.grad) / (self.state[p]["old_p"] - p.data + 1e-12)
+                    self.state[p]['exp_avg'] = torch.zeros_like(p, memory_format=torch.preserve_format)
                 if 'hess' not in self.state[p].keys():
-                    self.state[p]['hess'] = estimated_hess.data.clone()
-                else:
-                    self.state[p]['hess'].mul_(self.beta2).add_(estimated_hess, alpha=1-self.beta2)
-                denom = self.state[p]['hess'].abs().add_(1e-12).sqrt() / math.sqrt(bias_correction2)
+                    self.state[p]['hess'] = torch.zeros_like(p, memory_format=torch.preserve_format)
+                    
+                self.state[p]['exp_avg'].lerp_(p.grad, 1-self.beta1)
+                
+                estimated_hess = (self.state[p]["old_g"] - p.grad) / (self.state[p]["old_p"] - p.data + 1e-12)
+                self.state[p]['hess'].mul_(self.beta2).add_(estimated_hess, alpha=1-self.beta2)
+                
+                numer = self.state[p]['exp_avg'] / bias_correction1
+                denom = self.state[p]['hess'].abs().sqrt().add_(1e-12) / math.sqrt(bias_correction2)
                 
                 p.data = self.state[p]["old_p"]  # get back to "w" from "w + e(w)"
                 

@@ -2,12 +2,12 @@ import torch
 import math
 
 
-class SAMAccerBelief(torch.optim.Optimizer):
+class SAMBelief(torch.optim.Optimizer):
     def __init__(self, params, base_optimizer, rho=0.05, adaptive=False, betas=(0.9, 0.95), **kwargs):
         assert rho >= 0.0, f"Invalid rho, should be non-negative: {rho}"
 
         defaults = dict(rho=rho, adaptive=adaptive, **kwargs)
-        super(SAMAccerBelief, self).__init__(params, defaults)
+        super(SAMBelief, self).__init__(params, defaults)
 
         self.base_optimizer = base_optimizer(self.param_groups, **kwargs)
         self.param_groups = self.base_optimizer.param_groups
@@ -44,11 +44,11 @@ class SAMAccerBelief(torch.optim.Optimizer):
                 if 'exp_avg' not in self.state[p].keys():
                     self.state[p]['exp_avg'] = p.grad.data.clone()
                 else:
-                    self.state[p]['exp_avg'].mul_(self.beta1).add_(p.grad, alpha=1-self.beta1)
+                    self.state[p]['exp_avg'].mul_(self.beta1).add_(p.grad, alpha=1-self.beta1).add_(1e-12)
                 numer = self.state[p]['exp_avg'] / math.sqrt(bias_correction1)
 
-                delta_sq = (self.state[p]["old_g"] - p.grad) * (self.state[p]["old_g"] - p.grad)
-                if 'hess' not in self.state[p].keys():
+                delta_sq = (p.grad - self.state[p]['exp_avg']) * (p.grad - self.state[p]['exp_avg'])
+                if 'vt' not in self.state[p].keys():
                     self.state[p]['vt'] = delta_sq.data.clone()
                 else:
                     self.state[p]['vt'].mul_(self.beta2).add_(delta_sq, alpha=1-self.beta2)

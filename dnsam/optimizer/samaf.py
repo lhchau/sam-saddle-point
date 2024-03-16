@@ -42,10 +42,9 @@ class SAMAF(torch.optim.Optimizer):
                 # bias_correction2 = 1 - self.beta2 ** self.state['step']
 
                 if 'exp_avg' not in self.state[p].keys():
-                    self.state[p]['exp_avg'] = p.grad.sign().clone()
-                else:
-                    self.state[p]['exp_avg'].mul_(self.beta1).add_(p.grad.sign(), alpha=1-self.beta1)
-                numer = (self.state[p]['exp_avg'] + 1e-12) / math.sqrt(bias_correction1)
+                    self.state[p]['exp_avg'] = torch.zeros_like(p, memory_format=torch.preserve_format)
+                self.state[p]['exp_avg'].lerp_(p.grad.sign(), 1-self.beta1)
+                numer = (self.state[p]['exp_avg'] + 1e-12) / bias_correction1
 
                 # estimated_hess = (self.state[p]["old_g"] - p.grad) / (self.state[p]["old_p"] - p.data + 1e-12)
                 # if 'hess' not in self.state[p].keys():
