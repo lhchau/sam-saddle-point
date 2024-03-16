@@ -3,7 +3,7 @@ import os
 
 # Load YAML file
 dir_path = os.path.join('.', 'config')
-betas = [ [0.8, 0.9], [0.95, 0.965], [0.95, 0.99], [0.9, 0.95]]
+betas = [ [0.8, 0.9], [0.95, 0.965], [0.95, 0.99], [0.9, 0.95], [0.9, 0.9]]
 rhos = [0.05, 0.1, 0.2]
 for rho in rhos:
     for beta in betas:
