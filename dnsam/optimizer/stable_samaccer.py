@@ -2,12 +2,12 @@ import torch
 import math
 
 
-class SAMBA(torch.optim.Optimizer):
+class STABLE_SAMACCER(torch.optim.Optimizer):
     def __init__(self, params, base_optimizer, rho=0.05, adaptive=False, betas=(0.9, 0.95), **kwargs):
         assert rho >= 0.0, f"Invalid rho, should be non-negative: {rho}"
 
         defaults = dict(rho=rho, adaptive=adaptive, **kwargs)
-        super(SAMBA, self).__init__(params, defaults)
+        super(STABLE_SAMACCER, self).__init__(params, defaults)
 
         self.base_optimizer = base_optimizer(self.param_groups, **kwargs)
         self.param_groups = self.base_optimizer.param_groups
@@ -18,6 +18,7 @@ class SAMBA(torch.optim.Optimizer):
     @torch.no_grad()
     def first_step(self, zero_grad=False):        
         grad_norm = self._grad_norm()
+        self.curr_step_norm = grad_norm
         
         for group in self.param_groups:
             scale = group["rho"] / (grad_norm + 1e-12)
@@ -33,6 +34,8 @@ class SAMBA(torch.optim.Optimizer):
 
     @torch.no_grad()
     def second_step(self, zero_grad=False):
+        self.step_norm_before_hess = self._grad_norm()
+
         for group in self.param_groups:
             for p in group["params"]:
                 if p.grad is None: continue
@@ -43,21 +46,26 @@ class SAMBA(torch.optim.Optimizer):
 
                 if 'exp_avg' not in self.state[p].keys():
                     self.state[p]['exp_avg'] = torch.zeros_like(p, memory_format=torch.preserve_format)
-                if 'exp_avg_weight' not in self.state[p].keys():
-                    self.state[p]['exp_avg_weight'] = torch.zeros_like(p, memory_format=torch.preserve_format)
+                if 'vt' not in self.state[p].keys():
+                    self.state[p]['vt'] = torch.zeros_like(p, memory_format=torch.preserve_format)
                     
                 self.state[p]['exp_avg'].lerp_(p.grad, 1 - self.beta1)
-                exp_avg = self.state[p]['exp_avg'] / bias_correction1
                 
-                delta = p.grad.sub(exp_avg)
-                self.state[p]['exp_avg_weight'].lerp_(p.grad.div(delta.abs()), 1 - self.beta2)
+                normalize_grad = p.grad.mul(self.curr_step_norm/self.step_norm_before_hess)
+                delta = self.state[p]["old_g"].sub(normalize_grad)
+                self.state[p]['vt'].mul_(self.beta2).addcmul_(delta, delta.conj(), value=1 - self.beta2)
 
-                numer = self.state[p]['exp_avg_weight'] / bias_correction2
+                numer = self.state[p]['exp_avg'] / bias_correction1
+                denom = (self.state[p]['vt'].sqrt() / math.sqrt(bias_correction2)).add_(1e-12)
                 
                 p.data = self.state[p]["old_p"]  # get back to "w" from "w + e(w)"
                 
-                p.grad = numer.clamp(-1, 1)
-
+                p.grad = (numer.div_(denom)).clamp(-1, 1)
+        self.step_norm = self._grad_norm()
+        for group in self.param_groups:
+            for p in group["params"]:
+                p.grad.mul_(self.step_norm_before_hess/self.step_norm)
+                
         self.base_optimizer.step()  # do the actual "sharpness-aware" update
 
         if zero_grad: self.zero_grad()

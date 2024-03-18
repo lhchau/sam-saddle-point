@@ -10,9 +10,9 @@ model:
   architecture: resnet18
   lr: 0.1
   momentum: 0.0
-  name: samaccer
+  name: stable_samaccer
   nesterov: false
-  rho: 0.05
+  rho: 0.2
   weight_decay: 0.001
   betas: [0.9, 0.9]
 trainer:

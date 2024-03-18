@@ -33,11 +33,11 @@ class SAMA_LBGFS(torch.optim.Optimizer):
 
     @torch.no_grad()
     def second_step(self, zero_grad=False):
+        self.state['step'] += 1
         for group in self.param_groups:
             for p in group["params"]:
                 if p.grad is None: continue
                 
-                self.state['step'] += 1
                 bias_correction1 = 1 - self.beta1 ** self.state['step']
                 # bias_correction2 = 1 - self.beta2 ** self.state['step']
 

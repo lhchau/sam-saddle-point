@@ -97,15 +97,22 @@ def train(epoch):
         outputs = net(inputs)
         first_loss = criterion(outputs, targets)
         first_loss.backward()
-        optimizer.first_step(zero_grad=True)
         
+        sgd_grads = get_gradients(optimizer)
+        optimizer.first_step(zero_grad=False)
+        optimizer.zero_grad()
+
         disable_running_stats(net)  # <- this is the important line
         criterion(net(inputs), targets).backward()
-        optimizer.second_step(zero_grad=True)
+        
+        sam_grads = get_gradients(optimizer)
+        optimizer.second_step(zero_grad=False)
+        optimizer.zero_grad()
         
         wandb.log({
-            'step_norm_before_hess': optimizer.step_norm_before_hess,
-            'step_norm': optimizer.step_norm,
+            'similarity': np.mean([cosine_similarity(sgd_grad, sam_grad) for sgd_grad, sam_grad in zip(sgd_grads, sam_grads)]),
+            'step_norm_before_hess': optimizer.new_grad_norm,
+            'step_norm': optimizer.final_grad_norm,
         })
         with torch.no_grad():
             train_loss += first_loss.item()

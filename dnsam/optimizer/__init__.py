@@ -13,7 +13,7 @@ from .samaccer import SAMACCER
 from .samawm import SAMAWM
 from .samafam import SAMAFAM
 from .sambelief import SAMBelief
-from .samba import SAMBA
+from .stable_samaccer import STABLE_SAMACCER
 
 
 def get_optimizer(net, cfg):
@@ -173,8 +173,8 @@ def get_optimizer(net, cfg):
             nesterov=cfg['model']['nesterov'],
             betas=cfg['model']['betas'],
         )
-    elif cfg['model']['name'] == 'samba':
-        return SAMBA(
+    elif cfg['model']['name'] == 'stable_samaccer':
+        return STABLE_SAMACCER(
             net.parameters(), 
             base_optimizer, 
             lr=cfg['model']['lr'], 

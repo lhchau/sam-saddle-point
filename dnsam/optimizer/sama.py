@@ -17,10 +17,10 @@ class SAMA(torch.optim.Optimizer):
 
     @torch.no_grad()
     def first_step(self, zero_grad=False):        
-        grad_norm = self._grad_norm()
+        self.old_grad_norm = self._grad_norm()
         
         for group in self.param_groups:
-            scale = group["rho"] / (grad_norm + 1e-12)
+            scale = group["rho"] / (self.old_grad_norm + 1e-12)
             
             for p in group["params"]:
                 if p.grad is None: continue
@@ -33,12 +33,13 @@ class SAMA(torch.optim.Optimizer):
 
     @torch.no_grad()
     def second_step(self, zero_grad=False):
-        self.step_norm_before_hess = self._grad_norm()
+        self.new_grad_norm = self._grad_norm()
+        self.state['step'] += 1
+        
         for group in self.param_groups:
             for p in group["params"]:
                 if p.grad is None: continue
                 
-                self.state['step'] += 1
                 bias_correction1 = 1 - self.beta1 ** self.state['step']
                 bias_correction2 = 1 - self.beta2 ** self.state['step']
 
@@ -58,10 +59,10 @@ class SAMA(torch.optim.Optimizer):
                 p.data = self.state[p]["old_p"]  # get back to "w" from "w + e(w)"
                 
                 p.grad = (numer.div_(denom)).clamp(-1, 1)
-        self.step_norm = self._grad_norm()
-        for group in self.param_groups:
-            for p in group["params"]:
-                p.grad.mul_(math.sqrt(self.step_norm_before_hess/self.step_norm))
+        self.final_grad_norm = self._grad_norm()
+        # for group in self.param_groups:
+            # for p in group["params"]:
+                # p.grad.mul_(self.step_norm_before_hess/self.step_norm)
         
         self.base_optimizer.step()  # do the actual "sharpness-aware" update
 
